@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora ICMS - Posto Fiscal Pará (Convênio 52/91)</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        #formICMS {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            color: #34495e;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #27ae60;
+        }
+        #resultado {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            line-height: 1.6;
+        }
+        #resultado h3 {
+            color: #e74c3c;
+            margin-top: 0;
+            font-size: 20px;
+        }
+        #resultado strong {
+            color: #2980b9;
+        }
+        #loading {
+            text-align: center;
+            color: #7f8c8d;
+            display: none;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        @media (max-width: 600px) {
+            #formICMS, #resultado {
+                padding: 15px;
+                margin: 10px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            input, select, button {
+                font-size: 14px;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+</head>
+<body>
+    <h1>Calculadora ICMS - Posto Fiscal Pará (Convênio 52/91)</h1>
+    <form id="formICMS">
+        <label for="nfFile">Upload da Nota Fiscal (PDF):</label>
+        <input type="file" id="nfFile" accept=".pdf" required>
+
+        <label for="aliquotaInterestadual">Alíquota Interestadual (%):</label>
+        <input type="number" id="aliquotaInterestadual" step="0.1" value="7" required>
+
+        <label for="origem">Estado de Origem:</label>
+        <select id="origem" required>
+            <option value="">Selecione</option>
+            <option value="AC">Acre</option>
+            <option value="AL">Alagoas</option>
+            <option value="AP">Amapá</option>
+            <option value="AM">Amazonas</option>
+            <option value="BA">Bahia</option>
+            <option value="CE">Ceará</option>
+            <option value="DF">Distrito Federal</option>
+            <option value="ES">Espírito Santo</option>
+            <option value="GO">Goiás</option>
+            <option value="MA">Maranhão</option>
+            <option value="MT">Mato Grosso</option>
+            <option value="MS">Mato Grosso do Sul</option>
+            <option value="MG">Minas Gerais</option>
+            <option value="PB">Paraíba</option>
+            <option value="PR">Paraná</option>
+            <option value="PE">Pernambuco</option>
+            <option value="PI">Piauí</option>
+            <option value="RJ">Rio de Janeiro</option>
+            <option value="RN">Rio Grande do Norte</option>
+            <option value="RS">Rio Grande do Sul</option>
+            <option value="RO">Rondônia</option>
+            <option value="RR">Roraima</option>
+            <option value="SC">Santa Catarina</option>
+            <option value="SP">São Paulo</option>
+            <option value="SE">Sergipe</option>
+            <option value="TO">Tocantins</option>
+        </select>
+
+        <label for="aliquotaDestino">Alíquota Interna Pará (%):</label>
+        <input type="number" id="aliquotaDestino" step="0.1" value="19" required>
+
+        <label for="MVA">A mercadoria é destinada para comercialização? Insira a MVA do produto:</label>
+        <input type="number" id="MVA" step="0.1">
+
+        <button type="button" onclick="calcularICMS()">Calcular ICMS Devido ao Pará</button>
+    </form>
+
+    <div id="loading">Carregando e processando PDF...</div>
+    <div id="resultado"></div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        async function carregarNCMs() {
+            try {
+                const response = await fetch('ncms.json');
+                if (!response.ok) throw new Error('Erro ao carregar ncms.json');
+                return await response.json();
+            } catch (error) {
+                console.error('Erro ao carregar ncms.json:', error);
+                alert('Erro ao carregar os dados dos NCMs: ' + error.message);
+                return [];
+            }
+        }
+
+        async function verificarNCM(ncm) {
+            const ncms = await carregarNCMs();
+            let cleanNCM = ncm.replace(/[.\s]/g, '');
+
+            const ncmInfo = ncms.find(item => {
+                const cleanItemNCM = item.ncm.replace(/[.\s]/g, '');
+                return cleanItemNCM === cleanNCM || cleanNCM.startsWith(cleanItemNCM);
+            });
+            if (!ncmInfo) return null;
+
+            return {
+                annex: ncmInfo.anexo,
+                clause: ncmInfo.anexo === "Anexo I" ? "Cláusula Primeira" : "Cláusula Segunda",
+                item: ncmInfo.item,
+                description: ncmInfo.descricao,
+                type: ncmInfo.anexo === "Anexo I" ? "industrial" : "agricola"
+            };
+        }
+
+        async function extrairNCMsDoPDF(file) {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const numPages = pdf.numPages;
+                let itensExtraidos = [];
+                let totalNota = 0;
+
+                for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    const textItems = textContent?.items || [];
+
+                    if (textItems.length === 0) {
+                        console.warn('Nenhum item de texto encontrado na página ' + pageNum + '. O PDF pode ser uma imagem ou estar corrompido.');
+                        continue;
+                    }
+
+                    console.log('Itens de texto com coordenadas:', textItems);
+
+                    // Agrupar itens por linha aproximada (baseado em y-coordenada)
+                    const lines = [];
+                    textItems.forEach(item => {
+                        const y = item.transform[5]; // y-coordenada
+                        let line = lines.find(l => Math.abs(l.y - y) < 20); // Aumentei a tolerância para 20 unidades
+                        if (!line) {
+                            line = { y: y, items: [] };
+                            lines.push(line);
+                        }
+                        line.items.push(item);
+                    });
+
+                    // Ordenar itens em cada linha por x-coordenada
+                    lines.forEach(line => {
+                        line.items.sort((a, b) => a.transform[4] - b.transform[4]); // Ordenar por x
+                    });
+
+                    console.log('Linhas detectadas:', lines.length);
+
+                    // Extrair NCMs e valores da seção de produtos
+                    const produtosSectionStart = textItems.findIndex(item => item.str.includes('DADOS DOS PRODUTOS / SERVIÇOS'));
+                    const produtosSectionEnd = textItems.findIndex(item => item.str.includes('DADOS ADICIONAIS'));
+                    if (produtosSectionStart === -1 || produtosSectionEnd === -1) {
+                        console.warn('Seção de produtos não encontrada na página ' + pageNum);
+                        continue;
+                    }
+
+                    const produtosItems = textItems.slice(produtosSectionStart, produtosSectionEnd);
+                    let processedNCMs = new Set();
+
+                    // Processar cada linha
+                    lines.forEach(line => {
+                        // Tentar identificar NCM ou código de produto
+                        const ncmItem = line.items.find(item => (item.str.match(/\b(\d{4}\.\d{2}\.\d{2}|\d{8})\b/) && item.transform[4] > 100 && item.transform[4] < 200) || item.str.match(/\b\d{9}\b/)); // Inclui códigos de 9 dígitos
+                        if (ncmItem && !processedNCMs.has(ncmItem.str)) {
+                            const ncm = ncmItem.str;
+                            let valor = null;
+                            const valueItem = line.items.find(i => i.transform[4] > 400 && i.transform[4] < 600 && i.str.match(/\b(\d{1,3}(?:\.\d{3})*(?:,\d{2}))\b/));
+                            if (valueItem) {
+                                valor = parseFloat(valueItem.str.replace(/\./g, '').replace(',', '.'));
+                            }
+                            if (valor) {
+                                itensExtraidos.push({ ncm: ncm, valor: valor });
+                                processedNCMs.add(ncm); // Marcar NCM como processado
+                            } else {
+                                console.log('Nenhum valor encontrado para NCM:', ncm, 'na linha:', line.items.map(i => i.str).join(' '));
+                            }
+                        }
+                    });
+
+                    // Capturar valor total da nota
+                    const totalMatch = textItems.find(item => item.str.includes('VALOR TOTAL DA NOTA'));
+                    if (totalMatch) {
+                        const nextItems = textItems.slice(textItems.indexOf(totalMatch)).filter(item => item.str.match(/\b(\d{1,3}(?:\.\d{3})*(?:,\d{2}))\b/));
+                        if (nextItems.length > 0) {
+                            totalNota = parseFloat(nextItems[0].str.replace(/\./g, '').replace(',', '.'));
+                        }
+                    }
+
+                    console.log('Itens extraídos:', itensExtraidos);
+                    console.log('Valor total da nota:', totalNota);
+                }
+
+                if (itensExtraidos.length === 0) {
+                    loading.style.display = 'none';
+                    alert('Nenhum item com NCM e valor foi encontrado no PDF. Verifique os logs no console para mais detalhes.');
+                    return [];
+                }
+
+                itensExtraidos.totalValorNF = totalNota;
+                loading.style.display = 'none';
+                return itensExtraidos;
+            } catch (error) {
+                loading.style.display = 'none';
+                console.error('Erro ao processar o PDF:', error);
+                alert('Erro ao processar o PDF: ' + error.message + '. Verifique se o arquivo é uma DANFE válida.');
+                return [];
+            }
+        }
+
+        function formatarParaReal(valor) {
+            return Number(valor).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+        }
+
+        async function calcularICMS() {
+            const fileInput = document.getElementById('nfFile');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Por favor, selecione um arquivo PDF da nota fiscal!');
+                return;
+            }
+
+            const origem = document.getElementById('origem').value;
+            const aliquotaInterestadual = parseFloat(document.getElementById('aliquotaInterestadual').value);
+            const aliquotaDestino = parseFloat(document.getElementById('aliquotaDestino').value);
+            const mva = parseFloat(document.getElementById('MVA').value) || 0;
+            const destino = 'PA';
+
+            if (!origem || !aliquotaDestino) {
+                alert('Preencha todos os campos!');
+                return;
+            }
+
+            if (origem === 'PA') {
+                alert('Esta ferramenta é para notas de entrada no Pará vindas de outros estados!');
+                return;
+            }
+
+            const itensExtraidos = await extrairNCMsDoPDF(file);
+            if (itensExtraidos.length === 0) {
+                document.getElementById('resultado').innerHTML = '<p class="error">Nenhum item com NCM e valor foi encontrado no PDF. Verifique se o PDF é uma DANFE válida.</p>';
+                return;
+            }
+
+            let totalValor = 0;
+            let itensValidos = [];
+            let itensInvalidos = [];
+
+            for (const item of itensExtraidos) {
+                const ncmInfo = await verificarNCM(item.ncm);
+                if (ncmInfo) {
+                    itensValidos.push({ ncm: item.ncm, valor: item.valor, ...ncmInfo });
+                    totalValor += item.valor;
+                } else {
+                    itensInvalidos.push(item.ncm);
+                }
+            }
+
+            if (itensValidos.length === 0) {
+                document.getElementById('resultado').innerHTML = '<p class="error">Nenhum NCM válido encontrado no Convênio ICMS 52/91.</p>';
+                return;
+            }
+
+            if (itensExtraidos.totalValorNF && Math.abs(totalValor - itensExtraidos.totalValorNF) > 0.01) {
+                console.warn(`Aviso: Soma dos itens válidos (${totalValor}) não coincide com o valor total da NF (${itensExtraidos.totalValorNF}). Verifique a extração.`);
+            }
+
+            const sulSudesteMenosES = ['SP', 'RJ', 'MG', 'PR', 'SC', 'RS'];
+            const isSulSudesteMenosES = sulSudesteMenosES.includes(origem);
+
+            let totalBaseCalculoReduzidaOrigem = 0;
+            let totalIcmsOrigem = 0;
+            let totalBaseCalculoReduzidaDestino = 0;
+            let totalBaseCalculoReduzidaDestinoPorDentro = 0;
+            let totalIcmsInterno = 0;
+            let totalIcmsDestino = 0;
+
+            itensValidos.forEach(item => {
+                const tipo = item.type;
+
+                let aliquotaInternaEquivalente, aliquotaInterestadualEquivalente;
+                if (tipo === 'industrial') {
+                    aliquotaInternaEquivalente = 8.8;
+                    aliquotaInterestadualEquivalente = isSulSudesteMenosES ? 5.14 : 8.8;
+                } else {
+                    aliquotaInternaEquivalente = 5.6;
+                    aliquotaInterestadualEquivalente = isSulSudesteMenosES ? 4.1 : 7.0;
+                }
+
+                const baseCalculoReduzidaOrigem = (item.valor * aliquotaInterestadualEquivalente) / aliquotaInterestadual;
+                const icmsOrigem = (baseCalculoReduzidaOrigem * aliquotaInterestadual) / 100;
+                const baseCalculoReduzidaDestino = (item.valor * aliquotaInternaEquivalente) / aliquotaDestino;
+                const baseCalculoReduzidaDestinoPorDentro = (baseCalculoReduzidaDestino - icmsOrigem) / (1 - aliquotaDestino / 100);
+                let icmsInterno;
+
+                if (mva > 0) {
+                    const baseCalculoAjustadaMva = baseCalculoReduzidaDestinoPorDentro + (baseCalculoReduzidaDestinoPorDentro * mva) / 100;
+                    icmsInterno = (baseCalculoAjustadaMva * aliquotaDestino) / 100;
+                } else {
+                    icmsInterno = (baseCalculoReduzidaDestinoPorDentro * aliquotaDestino) / 100;
+                }
+
+                const icmsDestino = icmsInterno - icmsOrigem;
+
+                totalBaseCalculoReduzidaOrigem += baseCalculoReduzidaOrigem;
+                totalIcmsOrigem += icmsOrigem;
+                totalBaseCalculoReduzidaDestino += baseCalculoReduzidaDestino;
+                totalBaseCalculoReduzidaDestinoPorDentro += baseCalculoReduzidaDestinoPorDentro;
+                totalIcmsInterno += icmsInterno;
+                totalIcmsDestino += icmsDestino;
+            });
+
+            let resultadoHtml = `
+                <h3>Redução Exemplificada da Base de Cálculo Conforme Convênio ICMS 52/91</h3>
+                <strong>Total de Itens na NF: ${itensExtraidos.length}</strong><br>
+                <strong>Itens Válidos no Convênio: ${itensValidos.length}</strong><br>
+                ${itensInvalidos.length > 0 ? `<strong>Itens Inválidos: ${itensInvalidos.join(', ')}</strong><br>` : ''}
+                ${itensExtraidos.totalValorNF ? `<strong>Valor Total da NF (extraído): ${formatarParaReal(itensExtraidos.totalValorNF)}</strong><br>` : ''}
+                <br>
+            `;
+
+            itensValidos.forEach(item => {
+                resultadoHtml += `
+                    <strong>NCM: ${item.ncm}</strong><br>
+                    <strong>Valor do Item: ${formatarParaReal(item.valor.toFixed(2))}</strong><br>
+                    <strong>Classificação:</strong> ${item.annex}, Item ${item.item} - ${item.description}<br><br>
+                `;
+            });
+
+            resultadoHtml += `
+                <strong>Estado de Origem (${origem}):</strong><br>
+                ${itensValidos[0].clause}, Inciso I<br>
+                (A) Valor total dos itens válidos: ${formatarParaReal(totalValor.toFixed(2))}<br>
+                (B) Percentual reduzido BC: ${((itensValidos[0].type === 'industrial' ? (isSulSudesteMenosES ? 5.14 : 8.8) : (isSulSudesteMenosES ? 4.1 : 7.0)) / aliquotaInterestadual * 100).toFixed(2)}%<br>
+                (C) BC Reduzida Total [A * B]: ${formatarParaReal(totalBaseCalculoReduzidaOrigem.toFixed(2))}<br>
+                (D) ICMS Creditado Total [${aliquotaInterestadual}% * C]: ${formatarParaReal(totalIcmsOrigem.toFixed(2))}<br><br>
+                <strong>Estado de Destino (PA):</strong><br>
+                ${itensValidos[0].clause}, Inciso II<br>
+                ${mva > 0 ? '' : 'Cláusula Quinta - Diferencial de Alíquota <br>'}
+                (E) Percentual de redução para ${itensValidos[0].type === 'industrial' ? 8.8 : 5.6}%: ${((itensValidos[0].type === 'industrial' ? 8.8 : 5.6) / aliquotaDestino * 100).toFixed(2)}%<br>
+                (F) BC Reduzida Total [A * E]: ${formatarParaReal(totalBaseCalculoReduzidaDestino.toFixed(2))}<br>
+                (G) BC Reduzida ICMS Embutido Por Dentro [(F-D)/(1-${aliquotaDestino}/100)]: ${formatarParaReal(totalBaseCalculoReduzidaDestinoPorDentro.toFixed(2))}<br>
+                ${mva > 0 ? `Base de Cálculo Ajustada MVA de ${mva}%: ${formatarParaReal((totalBaseCalculoReduzidaDestinoPorDentro + (totalBaseCalculoReduzidaDestinoPorDentro * mva) / 100).toFixed(2))}<br>` : ''}
+                (H) Total ICMS [G * ${aliquotaDestino}%]: ${formatarParaReal(totalIcmsInterno.toFixed(2))}<br>
+                (I) ICMS Devido ao Pará [H - D]: ${formatarParaReal(totalIcmsDestino.toFixed(2))}<br>
+            `;
+
+            document.getElementById('resultado').innerHTML = resultadoHtml;
+        }
+    </script>
+</body>
+</html>

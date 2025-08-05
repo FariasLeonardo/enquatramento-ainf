@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora ICMS - Posto Fiscal Pará (Convênio 52/91)</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        #formICMS {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .ncm-section {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            position: relative;
+        }
+        .ncm-section .remove-ncm {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .ncm-section .remove-ncm:hover {
+            background-color: #c0392b;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            color: #34495e;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #27ae60;
+        }
+        #addNcmButton {
+            background-color: #3498db;
+        }
+        #addNcmButton:hover {
+            background-color: #2980b9;
+        }
+        #resultado {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            line-height: 1.6;
+        }
+        #resultado h3 {
+            color: #e74c3c;
+            margin-top: 0;
+            font-size: 20px;
+        }
+        #resultado strong {
+            color: #2980b9;
+        }
+        .invalid-ncm {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 600px) {
+            #formICMS, #resultado {
+                padding: 15px;
+                margin: 10px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            input, select, button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Calculadora ICMS - Posto Fiscal Pará (Convênio 52/91)</h1>
+    <form id="formICMS">
+        <div id="ncm-container">
+            <div class="ncm-section">
+                <label for="ncm-0">Código NCM da Mercadoria:</label>
+                <input type="text" id="ncm-0" placeholder="Ex: 7307.19" required>
+                <label for="valor-0">Valor da Mercadoria (R$):</label>
+                <input type="number" id="valor-0" step="0.01" required>
+                <label for="aliquotaInterestadual-0">Alíquota Interestadual (%):</label>
+                <input type="number" id="aliquotaInterestadual-0" step="0.1" value="7" required>
+                <label for="MVA-0">A mercadoria é destinada para comercialização? Insira a MVA do produto:</label>
+                <input type="number" id="MVA-0" step="0.1">
+            </div>
+        </div>
+        <button type="button" id="addNcmButton" onclick="adicionarNCM()">Adicionar Outro NCM</button>
+
+        <label for="origem">Estado de Origem:</label>
+        <select id="origem" required>
+            <option value="">Selecione</option>
+            <option value="AC">Acre</option>
+            <option value="AL">Alagoas</option>
+            <option value="AP">Amapá</option>
+            <option value="AM">Amazonas</option>
+            <option value="BA">Bahia</option>
+            <option value="CE">Ceará</option>
+            <option value="DF">Distrito Federal</option>
+            <option value="ES">Espírito Santo</option>
+            <option value="GO">Goiás</option>
+            <option value="MA">Maranhão</option>
+            <option value="MT">Mato Grosso</option>
+            <option value="MS">Mato Grosso do Sul</option>
+            <option value="MG">Minas Gerais</option>
+            <option value="PB">Paraíba</option>
+            <option value="PR">Paraná</option>
+            <option value="PE">Pernambuco</option>
+            <option value="PI">Piauí</option>
+            <option value="RJ">Rio de Janeiro</option>
+            <option value="RN">Rio Grande do Norte</option>
+            <option value="RS">Rio Grande do Sul</option>
+            <option value="RO">Rondônia</option>
+            <option value="RR">Roraima</option>
+            <option value="SC">Santa Catarina</option>
+            <option value="SP">São Paulo</option>
+            <option value="SE">Sergipe</option>
+            <option value="TO">Tocantins</option>
+        </select>
+
+        <label for="valorTotalNota">Valor Total da Nota (R$):</label>
+        <input type="number" id="valorTotalNota" step="0.1" required>
+
+        <label for="aliquotaDestino">Alíquota Interna Pará (%):</label>
+        <input type="number" id="aliquotaDestino" step="0.1" value="19" required>
+
+        <button type="button" onclick="calcularICMS()">Calcular ICMS Devido ao Pará</button>
+    </form>
+
+    <div id="resultado"></div>
+
+    <script>
+        let ncmCount = 1;
+
+        function adicionarNCM() {
+            const container = document.getElementById("ncm-container");
+            const newNcmSection = document.createElement("div");
+            newNcmSection.className = "ncm-section";
+            newNcmSection.innerHTML = `
+                <button type="button" class="remove-ncm" onclick="removerNCM(this)">Remover</button>
+                <label for="ncm-${ncmCount}">Código NCM da Mercadoria:</label>
+                <input type="text" id="ncm-${ncmCount}" placeholder="Ex: 7307.19" required>
+                <label for="valor-${ncmCount}">Valor da Mercadoria (R$):</label>
+                <input type="number" id="valor-${ncmCount}" step="0.01" required>
+                <label for="aliquotaInterestadual-${ncmCount}">Alíquota Interestadual (%):</label>
+                <input type="number" id="aliquotaInterestadual-${ncmCount}" step="0.1" value="7" required>
+                <label for="MVA-${ncmCount}">A mercadoria é destinada para comercialização? Insira a MVA do produto:</label>
+                <input type="number" id="MVA-${ncmCount}" step="0.1">
+            `;
+            container.appendChild(newNcmSection);
+            ncmCount++;
+            atualizarValorTotalNota();
+        }
+
+        function removerNCM(button) {
+            button.parentElement.remove();
+            atualizarValorTotalNota();
+        }
+
+        function atualizarValorTotalNota() {
+            let total = 0;
+            for (let i = 0; i < ncmCount; i++) {
+                const valorInput = document.getElementById(`valor-${i}`);
+                if (valorInput) {
+                    const valor = parseFloat(valorInput.value) || 0;
+                    total += valor;
+                }
+            }
+            document.getElementById("valorTotalNota").value = total.toFixed(2);
+        }
+
+        document.getElementById("ncm-container").addEventListener("input", function(e) {
+            if (e.target.id.startsWith("valor-")) {
+                atualizarValorTotalNota();
+            }
+        });
+
+        async function carregarNCMs() {
+            try {
+                const response = await fetch('ncms.json');
+                if (!response.ok) throw new Error('Erro ao carregar ncms.json');
+                return await response.json();
+            } catch (error) {
+                alert('Erro ao carregar os dados dos NCMs: ' + error.message);
+                return [];
+            }
+        }
+
+        async function verificarNCM(ncm) {
+            const ncms = await carregarNCMs();
+            let cleanNCM = ncm.replace(/[.\s]/g, '');
+
+            const ncmInfo = ncms.find(item => item.ncm.replace(/[.\s]/g, '') === cleanNCM);
+
+            if (!ncmInfo) {
+                for (let item of ncms) {
+                    if (cleanNCM.startsWith(item.ncm.replace(/[.\s]/g, ''))) {
+                        return {
+                            annex: item.anexo,
+                            clause: item.anexo === "Anexo I" ? "Cláusula Primeira" : "Cláusula Segunda",
+                            item: item.item,
+                            description: item.descricao,
+                            type: item.anexo === "Anexo I" ? "industrial" : "agricola"
+                        };
+                    }
+                }
+                return null;
+            }
+
+            return {
+                annex: ncmInfo.anexo,
+                clause: ncmInfo.anexo === "Anexo I" ? "Cláusula Primeira" : "Cláusula Segunda",
+                item: ncmInfo.item,
+                description: ncmInfo.descricao,
+                type: ncmInfo.anexo === "Anexo I" ? "industrial" : "agricola"
+            };
+        }
+
+        function formatarParaReal(valor) {
+            return Number(valor).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+        }
+
+        async function calcularICMS() {
+            const origem = document.getElementById("origem").value;
+            const aliquotaDestino = parseFloat(document.getElementById("aliquotaDestino").value);
+            const valorTotalNota = parseFloat(document.getElementById("valorTotalNota").value);
+            const destino = "PA";
+
+            if (!origem || !aliquotaDestino || !valorTotalNota) {
+                alert("Preencha todos os campos obrigatórios!");
+                return;
+            }
+
+            if (origem === "PA") {
+                alert("Esta ferramenta é para notas de entrada no Pará vindas de outros estados!");
+                return;
+            }
+
+            let resultados = [];
+            let ncmsInvalidos = [];
+            let totalICMSDestino = 0;
+            let totalICMSOrigem = 0;
+            let totalValorMercadoria = 0;
+
+            for (let i = 0; i < ncmCount; i++) {
+                const ncmInput = document.getElementById(`ncm-${i}`);
+                const valorInput = document.getElementById(`valor-${i}`);
+                const aliquotaInterestadualInput = document.getElementById(`aliquotaInterestadual-${i}`);
+                const mvaInput = document.getElementById(`MVA-${i}`);
+
+                if (!ncmInput || !valorInput || !aliquotaInterestadualInput) continue;
+
+                const ncm = ncmInput.value;
+                const valor = parseFloat(valorInput.value);
+                const aliquotaInterestadual = parseFloat(aliquotaInterestadualInput.value);
+                const mva = parseFloat(mvaInput.value) || 0;
+
+                if (!ncm || isNaN(valor) || isNaN(aliquotaInterestadual)) {
+                    alert(`Preencha o NCM, o valor e a alíquota interestadual da mercadoria ${i + 1}!`);
+                    return;
+                }
+
+                const ncmInfo = await verificarNCM(ncm);
+                if (!ncmInfo) {
+                    ncmsInvalidos.push(ncm);
+                    continue;
+                }
+
+                const tipo = ncmInfo.type;
+                const sulSudesteMenosES = ["SP", "RJ", "MG", "PR", "SC", "RS"];
+                const isSulSudesteMenosES = sulSudesteMenosES.includes(origem);
+
+                let aliquotaInterestadualEquivalente, aliquotaInternaEquivalente, clausula, inciso, alinea;
+                inciso = ["Inciso I", "Inciso II"];
+                clausula = ncmInfo.clause;
+
+                if (tipo === "industrial") {
+                    aliquotaInternaEquivalente = 8.8;
+                    if (isSulSudesteMenosES) {
+                        aliquotaInterestadualEquivalente = 5.14;
+                        alinea = "Alínea A";
+                    } else {
+                        aliquotaInterestadualEquivalente = 8.8;
+                        alinea = "Alínea B";
+                    }
+                } else {
+                    aliquotaInternaEquivalente = 5.6;
+                    if (isSulSudesteMenosES) {
+                        aliquotaInterestadualEquivalente = 4.1;
+                        alinea = "Alínea A";
+                    } else {
+                        aliquotaInterestadualEquivalente = 7.0;
+                        alinea = "Alínea B";
+                    }
+                }
+
+                let baseCalculoReduzidaOrigem, icmsOrigem, baseCalculoReduzidaDestino, baseCalculoReduzidaDestinoPorDentro, baseCalculoAjustadaMva, icmsInterno, clausulaQuinta, icmsDestino, percentualDeReducaoInterestadual, percentualDeReduçãoInterno;
+                let baseMvaHtml = "";
+
+                if (aliquotaInterestadual > 4) {
+                    baseCalculoReduzidaOrigem = (valor * aliquotaInterestadualEquivalente) / aliquotaInterestadual;
+                    percentualDeReducaoInterestadual = `(B) Percentual reduzido BC para ${aliquotaInterestadualEquivalente}% [${aliquotaInterestadualEquivalente}% / ${aliquotaInterestadual}%]: ${(aliquotaInterestadualEquivalente / aliquotaInterestadual * 100).toFixed(2)}% <br>`;
+                } else {
+                    baseCalculoReduzidaOrigem = valor;
+                    percentualDeReducaoInterestadual = `(B) Percentual de redução para ${aliquotaInterestadualEquivalente}% [${aliquotaInterestadualEquivalente}% / ${aliquotaInterestadual}%]: Não há redução. <br>`;
+                }
+
+                icmsOrigem = (baseCalculoReduzidaOrigem * aliquotaInterestadual) / 100;
+                baseCalculoReduzidaDestino = (valor) * (aliquotaInternaEquivalente / aliquotaDestino);
+                baseCalculoReduzidaDestinoPorDentro = (baseCalculoReduzidaDestino - icmsOrigem) / (1 - aliquotaDestino / 100);
+                baseCalculoAjustadaMva = baseCalculoReduzidaDestinoPorDentro + (baseCalculoReduzidaDestinoPorDentro * mva) / 100;
+
+                if (mva > 0) {
+                    baseMvaHtml = `Base de Cálculo Ajustada MVA de ${mva}%: ${formatarParaReal(baseCalculoAjustadaMva.toFixed(2))}<br>`;
+                    icmsInterno = (baseCalculoAjustadaMva * aliquotaDestino) / 100;
+                } else {
+                    icmsInterno = (baseCalculoReduzidaDestinoPorDentro * aliquotaDestino) / 100;
+                    clausulaQuinta = `Cláusula Quinta - Diferencial de Alíquota <br>`;
+                }
+
+                icmsDestino = icmsInterno - icmsOrigem;
+                percentualDeReduçãoInterno = (aliquotaInternaEquivalente / aliquotaDestino) * 100;
+
+                totalICMSOrigem += icmsOrigem;
+                totalICMSDestino += icmsDestino;
+                totalValorMercadoria += valor;
+
+                resultados.push({
+                    ncm,
+                    ncmInfo,
+                    valor,
+                    aliquotaInterestadual,
+                    percentualDeReducaoInterestadual,
+                    baseCalculoReduzidaOrigem,
+                    icmsOrigem,
+                    baseCalculoReduzidaDestino,
+                    baseCalculoReduzidaDestinoPorDentro,
+                    baseCalculoAjustadaMva,
+                    baseMvaHtml,
+                    icmsInterno,
+                    clausulaQuinta: clausulaQuinta || '',
+                    icmsDestino,
+                    percentualDeReduçãoInterno,
+                    clausula,
+                    inciso,
+                    alinea
+                });
+            }
+
+            let resultadoHtml = `<h3>Redução da Base de Cálculo Conforme Convênio ICMS 52/91</h3>`;
+
+            if (ncmsInvalidos.length > 0) {
+                resultadoHtml += `<div class="invalid-ncm">Os seguintes NCMs não estão listados no Convênio ICMS 52/91 e foram ignorados nos cálculos: ${ncmsInvalidos.join(', ')}</div>`;
+            }
+
+            if (resultados.length === 0) {
+                resultadoHtml += `<div class="invalid-ncm">Nenhum NCM válido foi informado para o cálculo. Por favor, insira NCMs listados no Convênio ICMS 52/91.</div>`;
+                document.getElementById("resultado").innerHTML = resultadoHtml;
+                return;
+            }
+
+            resultadoHtml += `<strong>Estado de Origem: ${origem}</strong><br>`;
+            resultadoHtml += `<strong>Valor Total da Nota: ${formatarParaReal(valorTotalNota.toFixed(2))}</strong><br><br>`;
+
+            resultados.forEach((res, index) => {
+                resultadoHtml += `
+                    <strong>Mercadoria ${index + 1} - NCM: ${res.ncm}</strong><br>
+                    <strong>Classificação:</strong> ${res.ncmInfo.annex}, Item ${res.ncmInfo.item} - ${res.ncmInfo.description}<br><br>
+                    <strong>Estado de Origem (${origem}):</strong><br>
+                    ${res.clausula}, ${res.inciso[0]}, ${res.alinea}<br>
+                    (A) Valor da mercadoria: ${formatarParaReal(res.valor.toFixed(2))}<br>
+                    ${res.percentualDeReducaoInterestadual}
+                    (C) BC Reduzida [A * B]: ${formatarParaReal(res.baseCalculoReduzidaOrigem.toFixed(2))}<br>
+                    (D) ICMS Creditado [${res.aliquotaInterestadual}% * C]: ${formatarParaReal(res.icmsOrigem.toFixed(2))}<br><br>
+                    <strong>Estado de Destino (PA):</strong><br>
+                    ${res.clausula}, ${res.inciso[1]}<br>
+                    ${res.clausulaQuinta}
+                    (F) Percentual de redução para ${res.percentualDeReduçãoInterno.toFixed(2)}% [${(res.percentualDeReduçãoInterno * aliquotaDestino / 100).toFixed(2)}% / ${aliquotaDestino}%]: ${res.percentualDeReduçãoInterno.toFixed(2)}% <br>
+                    (G) BC Reduzida [A * F]: ${formatarParaReal(res.baseCalculoReduzidaDestino.toFixed(2))}<br>
+                    (H) BC Reduzida ICMS Embutido Por Dentro [(G-D)/(1-${aliquotaDestino}/100)]: ${formatarParaReal(res.baseCalculoReduzidaDestinoPorDentro.toFixed(2))}<br>
+                    ${res.baseMvaHtml}
+                    (I) Total ICMS [H * ${aliquotaDestino}%]: ${formatarParaReal((res.icmsOrigem + res.icmsDestino).toFixed(2))}<br>
+                    (J) ICMS Devido ao Pará [I - D]: ${formatarParaReal(res.icmsDestino.toFixed(2))}<br><br>
+                `;
+            });
+
+            resultadoHtml += `
+                <h3>Resumo Final</h3>
+                <strong>Total Valor das Mercadorias:</strong> ${formatarParaReal(totalValorMercadoria.toFixed(2))}<br>
+                <strong>Total ICMS Creditado (Origem):</strong> ${formatarParaReal(totalICMSOrigem.toFixed(2))}<br>
+                <strong>Total ICMS Devido ao Pará:</strong> ${formatarParaReal(totalICMSDestino.toFixed(2))}<br>
+            `;
+
+            document.getElementById("resultado").innerHTML = resultadoHtml;
+        }
+    </script>
+</body>
+</html>
