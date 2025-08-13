@@ -112,8 +112,8 @@
         }
         /* Ajuste para reduzir o espaçamento na metodologia de cálculo */
         #calculo_difal p {
-            margin: 2px 0; /* Espaçamento mínimo entre linhas */
-            line-height: 1.2; /* Reduz a altura das linhas */
+            margin: 2px 0;
+            line-height: 1.2;
         }
     </style>
 </head>
@@ -137,7 +137,8 @@
             <h3>Dados para Cálculo do ICMS Diferença de Alíquota</h3>
             <div id="calculo-notas">
                 <div class="calculo-section" id="calculo-nota-1">
-                    
+                    <label for="calculo-nf-1">Número da Nota Fiscal:</label>
+                    <input type="text" id="calculo-nf-1" placeholder="Preenchido automaticamente" readonly>
                     <label for="valor_total-1">Valor Total da Operação Interestadual (R$):</label>
                     <input type="text" id="valor_total-1" placeholder="Ex: 45752.52 ou 45.752,52">
                     <label for="uf_origem-1">Unidade da Federação/Região de Origem:</label>
@@ -189,19 +190,16 @@
     <script>
         let notaCount = 1;
         let calculoNotaCount = 1;
-        let aliquotaCounts = { 1: 1 }; // Contador de alíquotas por nota
+        let aliquotaCounts = { 1: 1 };
 
-        // Função para formatar valores em reais
         function formatarReais(valor) {
             return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
-        // Função para formatar percentuais na saída
         function formatarPercentual(valor) {
             return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
         }
 
-        // Adiciona uma nova nota fiscal
         function adicionarNota() {
             notaCount++;
             const container = document.getElementById("notas-container");
@@ -214,17 +212,15 @@
                 <button class="remove-btn" onclick="removerNota(${notaCount})">Remover</button>
             `;
             container.appendChild(newNota);
-            atualizarBotoesRemover('nota');
+            atualizarBotoesRemover('.nota-section');
         }
 
-        // Remove uma nota fiscal
         function removerNota(id) {
             const nota = document.getElementById(`nota-${id}`);
             if (nota) nota.remove();
-            atualizarBotoesRemover('nota');
+            atualizarBotoesRemover('.nota-section');
         }
 
-        // Adiciona uma nova nota fiscal para cálculo
         function adicionarCalculoNota() {
             calculoNotaCount++;
             aliquotaCounts[calculoNotaCount] = 1;
@@ -232,7 +228,8 @@
             const newCalculoNota = document.createElement('div');
             newCalculoNota.className = "calculo-section";
             newCalculoNota.id = `calculo-nota-${calculoNotaCount}`;
-            const nfValue = document.getElementById(`nf-${calculoNotaCount}`).value || "NÃO INFORMADO";
+            const nfInput = document.getElementById(`nf-${calculoNotaCount}`);
+            const nfValue = nfInput ? nfInput.value : "NÃO INFORMADO";
             newCalculoNota.innerHTML = `
                 <label for="calculo-nf-${calculoNotaCount}">Número da Nota Fiscal:</label>
                 <input type="text" id="calculo-nf-${calculoNotaCount}" value="${nfValue}" placeholder="Preenchido automaticamente" readonly>
@@ -253,18 +250,16 @@
                 <button class="remove-btn" onclick="removerCalculoNota(${calculoNotaCount})">Remover NF</button>
             `;
             container.appendChild(newCalculoNota);
-            atualizarBotoesRemover('calculo-nota');
+            atualizarBotoesRemover('.calculo-section');
         }
 
-        // Remove uma nota fiscal do cálculo
         function removerCalculoNota(id) {
             const nota = document.getElementById(`calculo-nota-${id}`);
             if (nota) nota.remove();
             delete aliquotaCounts[id];
-            atualizarBotoesRemover('calculo-nota');
+            atualizarBotoesRemover('.calculo-section');
         }
 
-        // Adiciona uma nova alíquota para uma nota fiscal
         function adicionarAliquota(notaId) {
             aliquotaCounts[notaId] = (aliquotaCounts[notaId] || 0) + 1;
             const container = document.getElementById(`aliquotas-${notaId}`);
@@ -281,39 +276,33 @@
             atualizarBotoesRemoverAliquota(notaId);
         }
 
-        // Remove uma alíquota
         function removerAliquota(notaId, aliquotaId) {
             const aliquota = document.getElementById(`aliquota-${notaId}-${aliquotaId}`);
             if (aliquota) aliquota.remove();
             atualizarBotoesRemoverAliquota(notaId);
         }
 
-        // Atualiza visibilidade dos botões "Remover" para notas
-        function atualizarBotoesRemover(prefix) {
-            const notas = document.querySelectorAll(`.${prefix}-section`);
-            notas.forEach((nota, index) => {
-                const btn = nota.querySelector(".remove-btn");
-                btn.style.display = notas.length > 1 ? "inline-block" : "none";
+        function atualizarBotoesRemover(seletor) {
+            const elementos = document.querySelectorAll(seletor);
+            elementos.forEach((elemento) => {
+                const btn = elemento.querySelector(".remove-btn");
+                if (btn) btn.style.display = elementos.length > 1 ? "inline-block" : "none";
             });
         }
-
-        // Atualiza visibilidade dos botões "Remover" para alíquotas
+        
         function atualizarBotoesRemoverAliquota(notaId) {
             const aliquotas = document.querySelectorAll(`#aliquotas-${notaId} .aliquota-section`);
-            aliquotas.forEach((aliquota, index) => {
+            aliquotas.forEach((aliquota) => {
                 const btn = aliquota.querySelector(".remove-btn");
-                btn.style.display = aliquotas.length > 1 ? "inline-block" : "none";
+                if (btn) btn.style.display = aliquotas.length > 1 ? "inline-block" : "none";
             });
         }
 
-        // Função para limpar
         function limpar() {
-            // Reinicia contadores
             notaCount = 1;
             calculoNotaCount = 1;
             aliquotaCounts = { 1: 1 };
 
-            // Limpa as seções de notas e cálculos
             document.getElementById("notas-container").innerHTML = `
                 <div class="nota-section" id="nota-1">
                     <label for="nf-1">Número da Nota Fiscal:</label>
@@ -344,83 +333,64 @@
             `;
             document.getElementById("aliquota_interna").value = "";
 
-            // Limpa a saída
             document.getElementById("referencia-nf").innerHTML = "Referente à nota fiscal: [VALOR_DANFE]";
             document.getElementById("texto_ocorrencia").innerHTML = "Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou o DANFE listado acima, referente a mercadoria destinada a uma pessoa jurídica ou física não contribuinte do ICMS. Não foi identificado o pagamento do Diferencial de Alíquotas (DIFAL) devido, que deveria ter sido recolhido em favor do Estado do Pará. Em razão disso, foi lavrado o presente termo para cobrança do DIFAL devido. Conforme o artigo 6º da Lei Estadual nº 8.315/2015, o valor do próprio imposto integra sua base de cálculo. Assim, o cálculo do imposto, correspondente à diferença entre a alíquota interna e a interestadual, seguirá os artigos 6º e 7º da mesma lei, em conformidade com a Cláusula Segunda, §1º, do Convênio ICMS 236/2021, combinada com o §1º do artigo 13 da Lei Complementar nº 87/1996.";
             document.getElementById("calculo_difal").innerHTML = "";
+
             setTimeout(() => {
                 document.getElementById('nf-1').focus();
             }, 10);
         }
 
-        // Função para voltar à página anterior
         function voltarPaginaAnterior() {
             window.location.href = "capa.html";
         }
 
-        // Atualiza o texto com base nos dados inseridos
         function atualizarTexto() {
             let notasFiscais = [];
             const notas = document.querySelectorAll(".nota-section");
-
-            // Coleta os números das notas fiscais
-            notas.forEach((nota, index) => {
-                const i = index + 1;
-                const nf = document.getElementById(`nf-${i}`).value;
-                if (nf) notasFiscais.push(nf);
+            
+            notas.forEach((nota) => {
+                const nfInput = nota.querySelector("input");
+                if (nfInput && nfInput.value) {
+                    notasFiscais.push(nfInput.value);
+                }
             });
 
-            // Atualiza a linha de referência das notas fiscais
             const referenciaNf = document.getElementById("referencia-nf");
-            referenciaNf.innerHTML = notasFiscais.length > 1 
-                ? `Referente às notas fiscais: ${notasFiscais.join(', ')}` 
+            referenciaNf.innerHTML = notasFiscais.length > 1
+                ? `Referente às notas fiscais: ${notasFiscais.join(', ')}`
                 : `Referente à nota fiscal: ${notasFiscais[0] || "NÃO INFORMADO"}`;
 
-            // Exibe o cálculo do DIFAL
             const calculoDifalDiv = document.getElementById("calculo_difal");
-            let aliquotaInterna = document.getElementById("aliquota_interna").value || "19";
-            aliquotaInterna = parseFloat(aliquotaInterna.replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) / 100 || 0.19;
+            let aliquotaInternaInput = document.getElementById("aliquota_interna").value;
+            let aliquotaInterna = parseFloat(aliquotaInternaInput.replace(/[^0-9,]/g, '').replace(',', '.')) / 100 || 0.19;
 
             let totalValor = 0, totalIcmsDestacado = 0, totalBaseInter = 0, totalBaseDifal = 0, totalIcmsInterno = 0, totalIcmsDifal = 0;
-            let aliquotasTodas = [];
+            let aliquotasTodas = new Set();
             let ufsOrigem = new Set();
 
             const calculoNotas = document.querySelectorAll(".calculo-section");
-            calculoNotas.forEach((nota, index) => {
-                const i = index + 1;
-                // Normaliza os valores monetários
-                let valorTotal = document.getElementById(`valor_total-${i}`).value || "0";
-                valorTotal = parseFloat(valorTotal.replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0;
+            calculoNotas.forEach((nota) => {
+                const id = parseInt(nota.id.split('-')[2]);
 
-                let icmsDestacado = document.getElementById(`icms_destacado-${i}`).value || "0";
-                icmsDestacado = parseFloat(icmsDestacado.replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0;
+                let valorTotal = document.getElementById(`valor_total-${id}`).value || "0";
+                valorTotal = parseFloat(valorTotal.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
 
-                const ufOrigem = document.getElementById(`uf_origem-${i}`).value || "NÃO INFORMADO";
-                ufsOrigem.add(ufOrigem);
-                const aliquotas = document.querySelectorAll(`#aliquotas-${i} .aliquota-section`);
-                let aliquotasNota = [];
+                let icmsDestacado = document.getElementById(`icms_destacado-${id}`).value || "0";
+                icmsDestacado = parseFloat(icmsDestacado.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
 
-                aliquotas.forEach((aliquota, aIndex) => {
-                    const aId = aIndex + 1;
-                    let aliquotaInter = document.getElementById(`aliquota_inter-${i}-${aId}`).value || "0";
-                    aliquotaInter = parseFloat(aliquotaInter.replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0;
-                    aliquotasNota.push(aliquotaInter);
+                const ufOrigem = document.getElementById(`uf_origem-${id}`).value || "NÃO INFORMADO";
+                ufsOrigem.add(ufOrigem.toUpperCase());
+
+                const aliquotas = document.querySelectorAll(`#aliquotas-${id} .aliquota-section`);
+                aliquotas.forEach((aliquota) => {
+                    const aliquotaInput = aliquota.querySelector('input');
+                    const aliquotaInter = parseFloat(aliquotaInput.value.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+                    if (aliquotaInter) {
+                        aliquotasTodas.add(aliquotaInter);
+                    }
                 });
-
-                if (index === 0) {
-                    // Primeira NF: adiciona todas as alíquotas
-                    aliquotasNota.forEach(aliquota => {
-                        aliquotasTodas.push(formatarPercentual(aliquota));
-                    });
-                } else {
-                    // Demais NFs: adiciona apenas alíquotas diferentes
-                    aliquotasNota.forEach(aliquota => {
-                        const formattedAliquota = formatarPercentual(aliquota);
-                        if (!aliquotasTodas.includes(formattedAliquota)) {
-                            aliquotasTodas.push(formattedAliquota);
-                        }
-                    });
-                }
 
                 const baseInter = valorTotal - icmsDestacado;
                 const baseDifal = baseInter / (1 - aliquotaInterna);
@@ -434,12 +404,15 @@
                 totalIcmsInterno += icmsInterno;
                 totalIcmsDifal += icmsDifal;
             });
+            
+            const ufsOrigemStr = Array.from(ufsOrigem).length > 1 ? "Várias (consolidado)" : Array.from(ufsOrigem).join('');
+            const aliquotasStr = Array.from(aliquotasTodas).map(a => `${a}%`).join(' e ');
 
             const textoCalculo = `
                 <h3>Metodologia de Cálculo do ICMS Diferencial de Alíquota (Art. 7º, incisos I a IV, Lei Estadual nº 8.315/2015)</h3>
-                <p>Unidade da Federação/Região de Origem: ${Array.from(ufsOrigem).join(', ')}</p>
+                <p>Unidade da Federação/Região de Origem: ${ufsOrigemStr}</p>
                 <p>A - Base de Cálculo = Valor Total da Operação Interestadual (incluindo produto, IPI, frete, seguro e outras despesas): ${formatarReais(totalValor)}</p>
-                <p>B - Alíquota Interestadual: ${aliquotasTodas.join(' e ')}</p>
+                <p>B - Alíquota Interestadual: ${aliquotasStr}</p>
                 <p>C - ICMS Destacado (C = A × B): ${formatarReais(totalIcmsDestacado)}</p>
                 <p>D - Base de Cálculo Interestadual (Art. 7º, inciso I, D = A - C): ${formatarReais(totalBaseInter)}</p>
                 <p>E - Base de Cálculo do DIFAL (Art. 7º, inciso II, E = D / (1 - ${formatarPercentual(aliquotaInterna * 100)})): ${formatarReais(totalBaseDifal)}</p>

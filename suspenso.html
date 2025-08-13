@@ -24,6 +24,7 @@
             border-radius: 5px;
             margin-bottom: 30px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
         }
         p {
             margin: 10px 0;
@@ -97,6 +98,20 @@
             text-align: center;
             margin-top: 20px;
         }
+        .copy-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
@@ -141,13 +156,13 @@
     </div>
 
     <div class="bloco">
-        <h2>Ocorrência</h2>
+        <h2>Ocorrência <button class="copy-btn" onclick="copiarTexto('ocorrencia')">Copiar</button></h2>
         <p id="referencia-nf">Referente à nota fiscal: [VALOR_DANFE]</p>
         <p id="texto_ocorrencia">[TEXTO_OCORRÊNCIA]</p>
     </div>
 
     <div class="bloco">
-        <h2>Infrigência</h2>
+        <h2>Infrigência <button class="copy-btn" onclick="copiarTexto('infrigencia')">Copiar</button></h2>
         <p id="infrigencia_texto">[INFRIGÊNCIA]</p>
     </div>
 
@@ -158,7 +173,6 @@
     <script>
         let notaCount = 1;
 
-        // Adiciona uma nova nota fiscal
         function adicionarNota() {
             notaCount++;
             const container = document.getElementById("notas-container");
@@ -171,31 +185,28 @@
                 <button class="remove-btn" onclick="removerNota(${notaCount})">Remover</button>
             `;
             container.appendChild(newNota);
-            atualizarBotoesRemover('nota');
+            atualizarBotoesRemover('.nota-section');
         }
 
-        // Remove uma nota fiscal
         function removerNota(id) {
             const nota = document.getElementById(`nota-${id}`);
             if (nota) nota.remove();
-            atualizarBotoesRemover('nota');
+            atualizarBotoesRemover('.nota-section');
         }
 
-        // Atualiza visibilidade dos botões "Remover" para notas
-        function atualizarBotoesRemover(prefix) {
-            const notas = document.querySelectorAll(`.${prefix}-section`);
-            notas.forEach((nota, index) => {
+        function atualizarBotoesRemover(seletor) {
+            const notas = document.querySelectorAll(seletor);
+            notas.forEach((nota) => {
                 const btn = nota.querySelector(".remove-btn");
-                btn.style.display = notas.length > 1 ? "inline-block" : "none";
+                if (btn) {
+                    btn.style.display = notas.length > 1 ? "inline-block" : "none";
+                }
             });
         }
 
-        // Função para limpar
         function limpar() {
-            // Reinicia contador
             notaCount = 1;
-
-            // Limpa as seções de notas
+            
             document.getElementById("notas-container").innerHTML = `
                 <div class="nota-section" id="nota-1">
                     <label for="nf-1">Número da Nota Fiscal:</label>
@@ -203,59 +214,75 @@
                     <button class="remove-btn" onclick="removerNota(1)" style="display: none;">Remover</button>
                 </div>
             `;
-
-            // Limpa a saída
+            
             document.getElementById("referencia-nf").innerHTML = "Referente à nota fiscal: [VALOR_DANFE]";
             document.getElementById("texto_ocorrencia").innerHTML = "[TEXTO_OCORRÊNCIA]";
             document.getElementById("infrigencia_texto").innerHTML = "[INFRIGÊNCIA]";
             document.getElementById("item_art150").value = "";
+            
             setTimeout(() => {
-                document.getElementById('nf-1').focus();
+                const firstNfInput = document.getElementById('nf-1');
+                if (firstNfInput) {
+                    firstNfInput.focus();
+                }
             }, 10);
         }
 
-        // Função para voltar à página anterior
         function voltarPaginaAnterior() {
             window.location.href = "capa.html";
         }
+        
+        function copiarTexto(secao) {
+            let textoParaCopiar = "";
+            if (secao === 'ocorrencia') {
+                textoParaCopiar = document.getElementById('referencia-nf').innerText + "\n" +
+                                  document.getElementById('texto_ocorrencia').innerText;
+            } else if (secao === 'infrigencia') {
+                textoParaCopiar = document.getElementById('infrigencia_texto').innerText;
+            }
+            
+            if (textoParaCopiar) {
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textoParaCopiar;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+                alert("Texto copiado para a área de transferência!");
+            }
+        }
 
-        // Atualiza o texto com base nos dados inseridos
         function atualizarTexto() {
             let notasFiscais = [];
             const notas = document.querySelectorAll(".nota-section");
 
-            // Coleta os números das notas fiscais
-            notas.forEach((nota, index) => {
-                const i = index + 1;
-                const nf = document.getElementById(`nf-${i}`).value;
-                if (nf) notasFiscais.push(nf);
+            notas.forEach((nota) => {
+                const nfInput = nota.querySelector("input[id^='nf-']");
+                if (nfInput && nfInput.value) {
+                    notasFiscais.push(nfInput.value);
+                }
             });
-
-            // Atualiza a linha de referência das notas fiscais
+            
             const referenciaNf = document.getElementById("referencia-nf");
-            referenciaNf.innerHTML = notasFiscais.length > 1 
-                ? `Referente às notas fiscais: ${notasFiscais.join(', ')}` 
+            referenciaNf.innerHTML = notasFiscais.length > 1
+                ? `Referente às notas fiscais: ${notasFiscais.join(', ')}`
                 : `Referente à nota fiscal: ${notasFiscais[0] || "NÃO INFORMADO"}`;
 
-            // Gera o texto da ocorrência
             const textoOcorrencia = document.getElementById("texto_ocorrencia");
             const textoBaseOcorrencia = `Durante operação de fiscalização no posto fiscal de Itinga, o condutor apresentou a${notasFiscais.length > 1 ? 's' : ''} DANFE listada${notasFiscais.length > 1 ? 's' : ''} acima pertencente a destinatário que se encontra na situação cadastral de suspenso. Pelos motivos anteriormente explanados, foi lavrado este presente termo cobrando antecipadamente o imposto devido, conforme legislação estadual e consulta cadastral anexa.`;
             textoOcorrencia.innerHTML = textoBaseOcorrencia;
 
-            // Gera a infração com base no item do Artigo 150 selecionado
             const itemArt150 = document.getElementById("item_art150").value;
             const infrigenciaTexto = document.getElementById("infrigencia_texto");
             let textoInfrigencia = "[INFRIGÊNCIA NÃO ESPECIFICADA]";
 
             if (itemArt150) {
-                // Primeira parte da infração
                 const primeiraParte = `
                     - C.C. LEI 5.530/89, ART. 1º, I, ART. 2º, §3º, ART. 8º E ART. 78, I, “J”;<br>
                     - DECRETO 4.676/01 (RICMS), ART. 108, § 7º, ART.115, I, ART. 148, II, ART. 150, ${itemArt150}, ART. 151, ART. 151-A, ART. 167-C, ART. 728, VII, “B”;<br>
                     - LEI 6.182/98, ART. 2O, ART. 60 (CAPUT), §1º, “IV”, § 2° E ART. 61;<br>
                     - IN SEFA 18/2001;<br><br>`;
 
-                // Segunda parte: caput do Artigo 150 e o item selecionado
                 const itensArt150 = {
                     "I": "I - Durante o período de paralisação temporária;",
                     "II": "II - Durante o lapso de tempo entre a data em que o contribuinte requerer a baixa da inscrição à repartição fiscal e a baixa definitiva da inscrição;",
@@ -270,7 +297,7 @@
                     "XI": "XI - Quando esteja por mais de 30 (trinta) dias na situação de ativo não regular, deixar de entregar declaração a que esteja obrigado;",
                     "XII": "XII - A partir da data do registro de desenquadramento no Portal do Simples Nacional, quando o contribuinte, na condição de microempreendedor individual, for desenquadrado em decorrência de movimentação financeira acima do limite permitido pela legislação pertinente, enquanto não possuir os documentos e livros fiscais obrigatórios ao seu funcionamento na condição de microempresa;",
                     "XIII": "XIII - Quando constatado que o contribuinte utilizou de atos e negócios de interpostas pessoas, falsificação de documentos, simulação de operações ou prestações;",
-                    "XIV": "XIV - Quando constado que o contribuinte responsável por empreendimentos que extraiam, coletem, beneficiem, transformem, industrializem e armazenem produtos, subprodutos ou matéria prima de origem nativa florestal, emitiu Nota Fiscal referente a produtos e subprodutos de origem florestal sem estar registrado no Cadastro de Exportadores e Consumidores de Produtos Florestais do Estado do Pará -CEPROF - PA, quando obrigatório;",
+                    "XIV": "XIV - Quando constatado que o contribuinte responsável por empreendimentos que extraiam, coletem, beneficiem, transformem, industrializem e armazenem produtos, subprodutos ou matéria prima de origem nativa florestal, emitiu Nota Fiscal referente a produtos e subprodutos de origem florestal sem estar registrado no Cadastro de Exportadores e Consumidores de Produtos Florestais do Estado do Pará -CEPROF - PA, quando obrigatório;",
                     "XV": "XV - Quando identificadas, mediante monitoramento fiscal, irregularidades, conforme definido em ato do Secretário de Estado da Fazenda;"
                 };
 

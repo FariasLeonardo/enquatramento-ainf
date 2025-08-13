@@ -122,13 +122,13 @@
         <div id="notas-container">
             <div class="nota-section" id="nota-1">
                 <label for="nf-1">Número da Nota Fiscal:</label>
-                <input type="text" id="nf-1" placeholder="Digite o número da NF">
+                <input type="text" id="nf-1" placeholder="Digite o número da NF" required>
                 <button class="remove-btn" onclick="removerNota(1)" style="display: none;">Remover</button>
             </div>
         </div>
         <button onclick="adicionarNota()">Adicionar Nova Nota Fiscal</button>
 
-        <form id="formulario" onsubmit="return validarCheckbox()">
+        <form id="formulario">
             <label>Motivo(s) do Ativo Não Regular (selecione um ou mais):</label>
             <div class="checkbox-group">
                 <label><input type="checkbox" name="motivo" value="0"> a) Recolhimento do ICMS</label><br>
@@ -140,23 +140,22 @@
                 <label><input type="checkbox" name="motivo" value="6"> g) Crédito tributário inscrito em Dívida Ativa</label><br>
             </div>
             <br>
-            <button type="submit">Enviar</button>
+            <label>Tipo(s) de ICMS (selecione um ou mais):</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="icms" value="0" onchange="toggleCalculoContainer()"> I - ICMS Diferença de Alíquota (1141)</label>
+                <label><input type="checkbox" name="icms" value="1"> II - ICMS Antecipado sobre Medicamentos (1145)</label>
+                <label><input type="checkbox" name="icms" value="2"> III - ICMS Antecipado sobre Entradas (1146)</label>
+                <label><input type="checkbox" name="icms" value="3"> V - ICMS Cesta Básica (1152)</label>
+                <label><input type="checkbox" name="icms" value="4"> VII - ICMS Antecipado Especial do Imposto (1173)</label>
+            </div>
         </form>
-
-        <label>Tipo(s) de ICMS (selecione um ou mais):</label>
-        <div class="checkbox-group">
-            <label><input type="checkbox" name="icms" value="0"> I - ICMS Diferença de Alíquota (1141)</label>
-            <label><input type="checkbox" name="icms" value="1"> II - ICMS Antecipado sobre Medicamentos (1145)</label>
-            <label><input type="checkbox" name="icms" value="2"> III - ICMS Antecipado sobre Entradas (1146)</label>
-            <label><input type="checkbox" name="icms" value="3"> V - ICMS Cesta Básica (1152)</label>
-            <label><input type="checkbox" name="icms" value="4"> VII - ICMS Antecipado Especial do Imposto (1173)</label>
-        </div>
 
         <div id="calculo-container" style="display: none;">
             <h3>Dados para Cálculo do ICMS Diferença de Alíquota</h3>
             <div id="calculo-notas">
                 <div class="calculo-section" id="calculo-nota-1">
-                    
+                    <label for="calculo-nf-1">Número da Nota Fiscal:</label>
+                    <input type="text" id="calculo-nf-1" placeholder="Preenchido automaticamente" readonly>
                     <label for="valor_total-1">Valor Total da Operação Interestadual (R$):</label>
                     <input type="text" id="valor_total-1" placeholder="Ex: 9800,00">
                     <label for="uf_origem-1">Unidade da Federação/Região de Origem:</label>
@@ -178,8 +177,8 @@
             <label for="aliquota_interna">Alíquota Interna (%):</label>
             <input type="text" id="aliquota_interna" placeholder="Ex: 19">
         </div>
-
-        <button onclick="atualizarTexto()">Gerar Texto</button>
+        
+        <button onclick="gerarTexto()">Gerar Texto</button>
     </div>
 
     <div class="bloco">
@@ -196,20 +195,18 @@
     </div>
 
     <div class="footer">
-        <button onclick="limpar()"  >Limpar</button>
+        <button onclick="limpar()">Limpar</button>
     </div>
 
     <script>
         let notaCount = 1;
         let calculoNotaCount = 1;
-        let aliquotaCounts = { 1: 1 }; // Contador de alíquotas por nota
-
-        // Função para formatar valores em reais
+        let aliquotaCounts = { 1: 1 };
+        
         function formatarReais(valor) {
             return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
-        // Adiciona uma nova nota fiscal
         function adicionarNota() {
             notaCount++;
             const container = document.getElementById("notas-container");
@@ -218,21 +215,19 @@
             newNota.id = `nota-${notaCount}`;
             newNota.innerHTML = `
                 <label for="nf-${notaCount}">Número da Nota Fiscal:</label>
-                <input type="text" id="nf-${notaCount}" placeholder="Digite o número da NF">
+                <input type="text" id="nf-${notaCount}" placeholder="Digite o número da NF" required>
                 <button class="remove-btn" onclick="removerNota(${notaCount})">Remover</button>
             `;
             container.appendChild(newNota);
-            atualizarBotoesRemover('nota');
+            atualizarBotoesRemover('.nota-section');
         }
 
-        // Remove uma nota fiscal
         function removerNota(id) {
             const nota = document.getElementById(`nota-${id}`);
             if (nota) nota.remove();
-            atualizarBotoesRemover('nota');
+            atualizarBotoesRemover('.nota-section');
         }
 
-        // Adiciona uma nova nota fiscal para cálculo
         function adicionarCalculoNota() {
             calculoNotaCount++;
             aliquotaCounts[calculoNotaCount] = 1;
@@ -240,7 +235,7 @@
             const newCalculoNota = document.createElement('div');
             newCalculoNota.className = "calculo-section";
             newCalculoNota.id = `calculo-nota-${calculoNotaCount}`;
-            const nfValue = document.getElementById(`nf-${calculoNotaCount}`).value || "NÃO INFORMADO";
+            const nfValue = document.getElementById(`nf-${calculoNotaCount}`) ? document.getElementById(`nf-${calculoNotaCount}`).value : "NÃO INFORMADO";
             newCalculoNota.innerHTML = `
                 <label for="calculo-nf-${calculoNotaCount}">Número da Nota Fiscal:</label>
                 <input type="text" id="calculo-nf-${calculoNotaCount}" value="${nfValue}" placeholder="Preenchido automaticamente" readonly>
@@ -261,18 +256,16 @@
                 <button class="remove-btn" onclick="removerCalculoNota(${calculoNotaCount})">Remover NF</button>
             `;
             container.appendChild(newCalculoNota);
-            atualizarBotoesRemover('calculo-nota');
+            atualizarBotoesRemover('.calculo-section');
         }
 
-        // Remove uma nota fiscal do cálculo
         function removerCalculoNota(id) {
             const nota = document.getElementById(`calculo-nota-${id}`);
             if (nota) nota.remove();
             delete aliquotaCounts[id];
-            atualizarBotoesRemover('calculo-nota');
+            atualizarBotoesRemover('.calculo-section');
         }
 
-        // Adiciona uma nova alíquota para uma nota fiscal
         function adicionarAliquota(notaId) {
             aliquotaCounts[notaId] = (aliquotaCounts[notaId] || 0) + 1;
             const container = document.getElementById(`aliquotas-${notaId}`);
@@ -289,60 +282,89 @@
             atualizarBotoesRemoverAliquota(notaId);
         }
 
-        // Remove uma alíquota
         function removerAliquota(notaId, aliquotaId) {
             const aliquota = document.getElementById(`aliquota-${notaId}-${aliquotaId}`);
             if (aliquota) aliquota.remove();
             atualizarBotoesRemoverAliquota(notaId);
         }
 
-        // Atualiza visibilidade dos botões "Remover" para notas
-        function atualizarBotoesRemover(prefix) {
-            const notas = document.querySelectorAll(`.${prefix}-section`);
-            notas.forEach((nota, index) => {
-                const btn = nota.querySelector(".remove-btn");
-                btn.style.display = notas.length > 1 ? "inline-block" : "none";
+        function atualizarBotoesRemover(seletor) {
+            const elementos = document.querySelectorAll(seletor);
+            elementos.forEach((elemento, index) => {
+                const btn = elemento.querySelector(".remove-btn");
+                if (btn) btn.style.display = elementos.length > 1 ? "inline-block" : "none";
             });
         }
-
-        // Atualiza visibilidade dos botões "Remover" para alíquotas
+        
         function atualizarBotoesRemoverAliquota(notaId) {
             const aliquotas = document.querySelectorAll(`#aliquotas-${notaId} .aliquota-section`);
             aliquotas.forEach((aliquota, index) => {
                 const btn = aliquota.querySelector(".remove-btn");
-                btn.style.display = aliquotas.length > 1 ? "inline-block" : "none";
+                if (btn) btn.style.display = aliquotas.length > 1 ? "inline-block" : "none";
             });
         }
-
-        // Função para validar checkboxes
-        function validarCheckbox() {
-            const motivoCheckboxes = document.querySelectorAll('input[name="motivo"]');
-            const icmsCheckboxes = document.querySelectorAll('input[name="icms"]');
-            const motivoMarcado = Array.from(motivoCheckboxes).some(checkbox => checkbox.checked);
-            const icmsMarcado = Array.from(icmsCheckboxes).some(checkbox => checkbox.checked);
-
-            if (!motivoMarcado) {
-                alert("Por favor, selecione pelo menos um motivo do Ativo Não Regular.");
-                return false;
+        
+        function toggleCalculoContainer() {
+            const icmsDifalCheckbox = document.querySelector('input[name="icms"][value="0"]');
+            const container = document.getElementById("calculo-container");
+            if (icmsDifalCheckbox.checked) {
+                container.style.display = "block";
+                
+                // Mapeia notas fiscais existentes para o formulário de cálculo
+                const notasFiscais = document.querySelectorAll('.nota-section input[type="text"]');
+                const calculoNfsContainer = document.getElementById('calculo-notas');
+                calculoNfsContainer.innerHTML = '';
+                
+                notasFiscais.forEach((nfInput, index) => {
+                    const id = index + 1;
+                    const valor = nfInput.value;
+                    const newCalculoNota = document.createElement('div');
+                    newCalculoNota.className = "calculo-section";
+                    newCalculoNota.id = `calculo-nota-${id}`;
+                    
+                    if (valor) {
+                        newCalculoNota.innerHTML = `
+                            <label for="calculo-nf-${id}">Número da Nota Fiscal:</label>
+                            <input type="text" id="calculo-nf-${id}" value="${valor}" readonly>
+                            <label for="valor_total-${id}">Valor Total da Operação Interestadual (R$):</label>
+                            <input type="text" id="valor_total-${id}" placeholder="Ex: 9800,00">
+                            <label for="uf_origem-${id}">Unidade da Federação/Região de Origem:</label>
+                            <input type="text" id="uf_origem-${id}" placeholder="Ex: SP">
+                            <div id="aliquotas-${id}">
+                                <div class="aliquota-section" id="aliquota-${id}-1">
+                                    <label for="aliquota_inter-${id}-1">Alíquota Interestadual (%):</label>
+                                    <input type="text" id="aliquota_inter-${id}-1" placeholder="Ex: 7">
+                                    <button class="remove-btn" onclick="removerAliquota(${id}, 1)" style="display: none;">Remover</button>
+                                </div>
+                            </div>
+                            <button onclick="adicionarAliquota(${id})">Adicionar Alíquota</button>
+                            <label for="icms_destacado-${id}">ICMS Destacado Total na NF (R$):</label>
+                            <input type="text" id="icms_destacado-${id}" placeholder="Ex: 686,00">
+                            <button class="remove-btn" onclick="removerCalculoNota(${id})" style="display: none;">Remover NF</button>
+                        `;
+                    } else {
+                        // Se a nota fiscal principal não foi preenchida, não adicione a seção de cálculo.
+                        return;
+                    }
+                    calculoNfsContainer.appendChild(newCalculoNota);
+                    aliquotaCounts[id] = 1;
+                    atualizarBotoesRemoverAliquota(id);
+                });
+                atualizarBotoesRemover('.calculo-section');
+            } else {
+                container.style.display = "none";
             }
-            if (!icmsMarcado) {
-                alert("Por favor, selecione pelo menos um tipo de ICMS.");
-                return false;
-            }
-
-            return true;
         }
 
-        // Função para limpar
         function limpar() {
             notaCount = 1;
             calculoNotaCount = 1;
             aliquotaCounts = { 1: 1 };
-
+            
             document.getElementById("notas-container").innerHTML = `
                 <div class="nota-section" id="nota-1">
                     <label for="nf-1">Número da Nota Fiscal:</label>
-                    <input type="text" id="nf-1" placeholder="Digite o número da NF">
+                    <input type="text" id="nf-1" placeholder="Digite o número da NF" required>
                     <button class="remove-btn" onclick="removerNota(1)" style="display: none;">Remover</button>
                 </div>
             `;
@@ -369,34 +391,30 @@
                 </div>
             `;
             document.getElementById("aliquota_interna").value = "";
-
+            
             document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
 
             document.getElementById("referencia-nf").innerHTML = "Referente à nota fiscal: [VALOR_DANFE]";
             document.getElementById("texto_ocorrencia").innerHTML = "Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou os documentos fiscais listados acima, pertencentes ao destinatário, que se encontra na condição de ativo não regular. Diante disso, foi lavrado este AINF para a cobrança antecipada do imposto devido. A situação de ativo não regular decorre de [OCORRÊNCIA], conforme legislação estadual e consulta cadastral anexa.";
             document.getElementById("calculo_difal").innerHTML = "";
             document.getElementById("infrigencia_texto").innerHTML = "";
-            document.getElementById("receita_texto").innerHTML = "";
+            document.getElementById("receita_texto").innerHTML = "[RECEITA]";
 
             setTimeout(() => {
                 document.getElementById('nf-1').focus();
             }, 10);
-            
         }
 
-        // Função para voltar à página anterior
         function voltarPaginaAnterior() {
             window.location.href = "capa.html";
         }
 
-        // Atualiza o texto com base nos dados inseridos
-        function atualizarTexto() {
-            // Valida checkboxes antes de gerar o texto
+        function gerarTexto() {
             const motivoCheckboxes = document.querySelectorAll('input[name="motivo"]');
             const icmsCheckboxes = document.querySelectorAll('input[name="icms"]');
             const motivoMarcado = Array.from(motivoCheckboxes).some(checkbox => checkbox.checked);
             const icmsMarcado = Array.from(icmsCheckboxes).some(checkbox => checkbox.checked);
-
+            
             if (!motivoMarcado) {
                 alert("Por favor, selecione pelo menos um motivo do Ativo Não Regular antes de gerar o texto.");
                 return;
@@ -409,15 +427,14 @@
             let notasFiscais = [];
             const notas = document.querySelectorAll(".nota-section");
 
-            notas.forEach((nota, index) => {
-                const i = index + 1;
-                const nf = document.getElementById(`nf-${i}`).value;
+            notas.forEach((nota) => {
+                const nf = nota.querySelector("input").value;
                 if (nf) notasFiscais.push(nf);
             });
 
             const referenciaNf = document.getElementById("referencia-nf");
-            referenciaNf.innerHTML = notasFiscais.length > 1 
-                ? `Referente às notas fiscais: ${notasFiscais.join(', ')}` 
+            referenciaNf.innerHTML = notasFiscais.length > 1
+                ? `Referente às notas fiscais: ${notasFiscais.join(', ')}`
                 : `Referente à nota fiscal: ${notasFiscais[0] || "NÃO INFORMADO"}`;
 
             const motivos = Array.from(document.querySelectorAll('input[name="motivo"]:checked')).map(cb => parseInt(cb.value));
@@ -435,59 +452,39 @@
 
             const textoOcorrencia = document.getElementById("texto_ocorrencia");
             const textoBase = "Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou os documentos fiscais listados acima, pertencentes ao destinatário, que se encontra na condição de ativo não regular. Diante disso, foi lavrado este AINF para a cobrança antecipada do imposto devido. A situação de ativo não regular decorre de ";
-            if (motivos.length > 0) {
-                const ocorrenciaTexto = motivos.map(i => ocorrencias[i]).join(" e ");
-                textoOcorrencia.innerHTML = `${textoBase}${ocorrenciaTexto}, conforme legislação estadual e consulta cadastral anexa.`;
-            } else {
-                textoOcorrencia.innerHTML = `${textoBase}[OCORRÊNCIA NÃO ESPECIFICADA], conforme legislação estadual e consulta cadastral anexa.`;
-            }
+            const ocorrenciaTexto = motivos.map(i => ocorrencias[i]).join(" e ");
+            textoOcorrencia.innerHTML = `${textoBase}${ocorrenciaTexto}, conforme legislação estadual e consulta cadastral anexa.`;
 
             const icmsSelecionados = Array.from(document.querySelectorAll('input[name="icms"]:checked')).map(cb => parseInt(cb.value));
             const receitaNumeros = icmsSelecionados.map(i => ["I", "II", "III", "V", "VII"][i]);
 
             const calculoDifalDiv = document.getElementById("calculo_difal");
-            const calculoContainer = document.getElementById("calculo-container");
             calculoDifalDiv.innerHTML = "";
             if (icmsSelecionados.includes(0)) {
-                calculoContainer.style.display = "block";
                 const aliquotaInterna = parseFloat(document.getElementById("aliquota_interna").value.replace(/[^0-9,]/g, '').replace(',', '.')) / 100 || 0.19;
                 let totalValor = 0, totalIcmsDestacado = 0, totalBaseInter = 0, totalBaseDifal = 0, totalIcmsInterno = 0, totalIcmsDifal = 0;
-                let aliquotasTodas = [];
-                let aliquotasUnicas = new Set();
+                let aliquotasTodas = new Set();
+                let ufsOrigem = new Set();
 
                 const calculoNotas = document.querySelectorAll(".calculo-section");
-                calculoNotas.forEach((nota, index) => {
-                    const i = index + 1;
-                    const valorTotal = parseFloat(document.getElementById(`valor_total-${i}`).value.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
-                    const icmsDestacado = parseFloat(document.getElementById(`icms_destacado-${i}`).value.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
-                    const aliquotas = document.querySelectorAll(`#aliquotas-${i} .aliquota-section`);
-                    let aliquotasNota = [];
-
-                    aliquotas.forEach((aliquota, aIndex) => {
-                        const aId = aIndex + 1;
-                        const aliquotaInter = parseFloat(document.getElementById(`aliquota_inter-${i}-${aId}`).value.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
-                        aliquotasNota.push(aliquotaInter);
+                calculoNotas.forEach((nota) => {
+                    const id = parseInt(nota.id.split('-')[2]);
+                    const valorTotal = parseFloat(document.getElementById(`valor_total-${id}`).value.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+                    const icmsDestacado = parseFloat(document.getElementById(`icms_destacado-${id}`).value.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+                    const ufOrigem = document.getElementById(`uf_origem-${id}`).value.toUpperCase();
+                    if (ufOrigem) ufsOrigem.add(ufOrigem);
+                    
+                    const aliquotas = document.querySelectorAll(`#aliquotas-${id} .aliquota-section`);
+                    aliquotas.forEach((aliquota) => {
+                        const aliquotaInter = parseFloat(aliquota.querySelector('input').value.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+                        if (aliquotaInter) aliquotasTodas.add(aliquotaInter);
                     });
-
-                    if (index === 0) {
-                        aliquotasNota.forEach(aliquota => {
-                            aliquotasUnicas.add(aliquota);
-                            aliquotasTodas.push(`${aliquota}%`);
-                        });
-                    } else {
-                        aliquotasNota.forEach(aliquota => {
-                            if (!aliquotasUnicas.has(aliquota)) {
-                                aliquotasUnicas.add(aliquota);
-                                aliquotasTodas.push(`${aliquota}%`);
-                            }
-                        });
-                    }
 
                     const baseInter = valorTotal - icmsDestacado;
                     const baseDifal = baseInter / (1 - aliquotaInterna);
                     const icmsInterno = baseDifal * aliquotaInterna;
                     const icmsDifal = icmsInterno - icmsDestacado;
-
+                    
                     totalValor += valorTotal;
                     totalIcmsDestacado += icmsDestacado;
                     totalBaseInter += baseInter;
@@ -495,12 +492,15 @@
                     totalIcmsInterno += icmsInterno;
                     totalIcmsDifal += icmsDifal;
                 });
+                
+                const ufsOrigemStr = ufsOrigem.size > 1 ? "Várias (consolidado)" : Array.from(ufsOrigem).join('');
+                const aliquotasStr = Array.from(aliquotasTodas).map(a => `${a}%`).join(' e ');
 
                 const textoCalculo = `
                     <h3>Metodologia de cálculo do ICMS Diferencial de alíquota / Art. 7º (I até IV) da Lei Estadual nº 8315/2015</h3>
-                    <p>Unidade da Federação/Região de Origem: Várias (consolidado)</p>
+                    <p>Unidade da Federação/Região de Origem: ${ufsOrigemStr}</p>
                     <p>A - Base de Cálculo = Valor Total da Operação Interestadual = valor do produto + IPI + Frete + Seguro + Outras despesas: ${formatarReais(totalValor)}</p>
-                    <p>B - Alíquota Interestadual: ${aliquotasTodas.join(' e ')}</p>
+                    <p>B - Alíquota Interestadual: ${aliquotasStr}</p>
                     <p>C - ICMS DESTACADO de Cálculo C = A * B: ${formatarReais(totalIcmsDestacado)}</p>
                     <p>D - Base de Cálculo Interestadual, conforme art. 7º, I D = A - C: ${formatarReais(totalBaseInter)}</p>
                     <p>E - Base de Cálculo do DIFAL, conforme art. 7º, II E = D / (1 - ${aliquotaInterna * 100}%): ${formatarReais(totalBaseDifal)}</p>
@@ -511,9 +511,9 @@
                 textoOcorrencia.innerHTML += "<br><br>OBSERVAR QUE O CÁLCULO DO TRIBUTO FOI FEITO COM BASE NA LEI 8.315/15, ART. 6º E 7º.";
                 calculoDifalDiv.innerHTML = textoCalculo;
             } else {
-                calculoContainer.style.display = "none";
+                document.getElementById("calculo-container").style.display = "none";
             }
-
+            
             const infrigenciaTexto = document.getElementById("infrigencia_texto");
             const motivoTexto = motivos.length > 0 ? motivoLetras.join(' e ') : "Nenhuma selecionada";
             infrigenciaTexto.innerHTML = `${motivoTexto}`;
@@ -521,12 +521,16 @@
             const receitaTexto = document.getElementById("receita_texto");
             let textoInfracao = "";
             if (icmsSelecionados.length > 0) {
+                const motivoStr = motivoLetras.join(' e ');
+                const receitaStr = receitaNumeros.join(' e ');
+                
                 if (icmsSelecionados.some(i => [1, 2, 3].includes(i)) && !icmsSelecionados.includes(4)) {
                     textoInfracao += `
                         - C.C. LEI 5.530/89: ART. 1º, I; ART. 2º, §3º;<br>
                         - DECRETO 4.676/01 (RICMS/PA): ART. 108, §9º; ART. 115, I; ANEXO I, ART. 107; APÊNDICE I;<br>
                         - LEI 6.182/98; ART. 2º; ART. 60 (CAPUT), §1º, §2º E ART. 61;<br>
-                        - CC IN 13/2005, ART. 1º, II, ${motivoTexto} E ART. 2º, ${receitaNumeros.join(' e ')}.
+                        - CC IN SEFA 13/2005, ART. 1º, II, ${motivoStr} E ART. 2º, ${receitaStr}.<br>
+                        - c.c LC 123/06 Art. 13 XIII, g, 1. (Se simples nacional).
                     `;
                 }
                 if (icmsSelecionados.includes(4)) {
@@ -534,7 +538,8 @@
                         - C.C. LEI 5.530/89: ART. 1º, I; ART. 2º, §3º;<br>
                         - DECRETO 4.676/01 (RICMS/PA): ART. 108, VII, “E” E §9º; ART. 115, I; ANEXO I, ART. 114-F;<br>
                         - LEI 6.182/98; ART. 2º; ART. 60 (CAPUT), §1º, §2º E ART. 61;<br>
-                        - CC IN 13/2005, ART. 1º, II, ${motivoTexto}; E ART. 2º, VII.
+                        - CC IN SEFA 13/2005, ART. 1º, II, ${motivoStr}; E ART. 2º, VII.<br>
+                        - c.c LC 123/06 Art. 13 XIII, g, 1. (Se simples nacional).
                     `;
                 }
                 if (icmsSelecionados.includes(0)) {
@@ -543,11 +548,12 @@
                         - LEI ESTADUAL Nº 5.530/89, ART. 2º, §3º; ART. 55, PARÁGRAFO ÚNICO; ART. 62 E ART. 78, INCISO I, ALÍNEA "D", ITEM 1;<br>
                         - LEI ESTADUAL Nº 8.315/15, ART. 1º; ART. 2º, CAPUT E PARÁGRAFO ÚNICO, INCISO I; ART. 6º; ART. 7º, INCISOS I, II, III E IV; ART. 10 E ART. 11;<br>
                         - RICMS, APROVADO PELO DECRETO 4.676/01, ART. 108, §§ 3º E 9º;<br>
-                        - CC IN SEFA 13/2005, ART. 1º, II, ${motivoTexto} E ART. 2º, INCISO I.
+                        - CC IN SEFA 13/2005, ART. 1º, II, ${motivoStr} E ART. 2º, INCISO I.<br>
+                        - c.c LC 123/06 Art. 13 XIII, g, 1. (Se simples nacional).
                     `;
                 }
             }
-            receitaTexto.innerHTML = receitaNumeros.length > 0 ? `${receitaNumeros.join(' e ')}<br>${textoInfracao}` : "Nenhum selecionado";
+            receitaTexto.innerHTML = icmsSelecionados.length > 0 ? `${receitaNumeros.join(' e ')}<br>${textoInfracao}` : "Nenhum selecionado";
         }
     </script>
 </body>

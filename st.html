@@ -24,6 +24,7 @@
             border-radius: 5px;
             margin-bottom: 30px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
         }
         p {
             margin: 10px 0;
@@ -97,6 +98,20 @@
             text-align: center;
             margin-top: 20px;
         }
+        .copy-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
@@ -135,7 +150,8 @@
             <h3>Dados para Cálculo do ICMS Substituição Tributária</h3>
             <div id="calculo-notas">
                 <div class="calculo-section" id="calculo-nota-1">
-                    <
+                    <label for="calculo-nf-1">Número da Nota Fiscal:</label>
+                    <input type="text" id="calculo-nf-1" placeholder="Preenchido automaticamente" readonly>
                     <label for="base_calculo-1">Base de Cálculo do ICMS ST (R$):</label>
                     <input type="text" id="base_calculo-1" placeholder="Ex: R$ 797.479,31" oninput="formatarMoeda(this)">
                     <label for="icms_st-1">Valor do ICMS destacado na NF (R$):</label>
@@ -154,14 +170,14 @@
     </div>
 
     <div class="bloco">
-        <h2>Ocorrência</h2>
+        <h2>Ocorrência <button class="copy-btn" onclick="copiarTexto('ocorrencia')">Copiar</button></h2>
         <p id="referencia-nf">Referente à nota fiscal: [VALOR_DANFE]</p>
         <p id="texto_ocorrencia">[TEXTO_OCORRÊNCIA]</p>
         <div id="calculo_st"></div>
     </div>
 
     <div class="bloco">
-        <h2>Infrigência</h2>
+        <h2>Infrigência <button class="copy-btn" onclick="copiarTexto('infrigencia')">Copiar</button></h2>
         <p id="infrigencia_texto">[INFRIGÊNCIA]</p>
     </div>
 
@@ -173,27 +189,25 @@
         let notaCount = 1;
         let calculoNotaCount = 1;
 
-        // Função para formatar valores como moeda (R$)
         function formatarMoeda(input) {
-            let valor = input.value.replace(/\D/g, ''); // Remove tudo que não é número
-            valor = (valor / 100).toFixed(2); // Divide por 100 e fixa 2 casas decimais
-            valor = valor.replace('.', ','); // Substitui ponto por vírgula
-            valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // Adiciona pontos como separadores de milhar
-            input.value = `R$ ${valor}`; // Adiciona o prefixo "R$ "
+            let valor = input.value.replace(/\D/g, '');
+            if (valor.length > 2) {
+                valor = (valor / 100).toFixed(2);
+                valor = valor.replace('.', ',');
+                valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                input.value = `R$ ${valor}`;
+            }
         }
 
-        // Função para converter valor de R$ para número
         function converterParaNumero(valor) {
             if (!valor) return 0;
             return parseFloat(valor.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) || 0;
         }
 
-        // Função para formatar valores em reais para exibição
         function formatarReais(valor) {
             return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
-        // Adiciona uma nova nota fiscal
         function adicionarNota() {
             notaCount++;
             const container = document.getElementById("notas-container");
@@ -222,24 +236,25 @@
                 <button class="remove-btn" onclick="removerNota(${notaCount})">Remover</button>
             `;
             container.appendChild(newNota);
-            atualizarBotoesRemover('nota');
+            atualizarBotoesRemover('.nota-section');
         }
 
-        // Remove uma nota fiscal
         function removerNota(id) {
             const nota = document.getElementById(`nota-${id}`);
             if (nota) nota.remove();
-            atualizarBotoesRemover('nota');
+            atualizarBotoesRemover('.nota-section');
         }
 
-        // Adiciona uma nova nota fiscal para cálculo
         function adicionarCalculoNota() {
             calculoNotaCount++;
             const container = document.getElementById("calculo-notas");
             const newCalculoNota = document.createElement('div');
             newCalculoNota.className = "calculo-section";
             newCalculoNota.id = `calculo-nota-${calculoNotaCount}`;
-            const nfValue = document.getElementById(`nf-${calculoNotaCount}`).value || "NÃO INFORMADO";
+            
+            const nfPrincipalInput = document.getElementById(`nf-${calculoNotaCount}`);
+            const nfValue = nfPrincipalInput ? nfPrincipalInput.value : "NÃO INFORMADO";
+            
             newCalculoNota.innerHTML = `
                 <label for="calculo-nf-${calculoNotaCount}">Número da Nota Fiscal:</label>
                 <input type="text" id="calculo-nf-${calculoNotaCount}" value="${nfValue}" placeholder="Preenchido automaticamente" readonly>
@@ -254,32 +269,27 @@
                 <button class="remove-btn" onclick="removerCalculoNota(${calculoNotaCount})">Remover NF</button>
             `;
             container.appendChild(newCalculoNota);
-            atualizarBotoesRemover('calculo-nota');
+            atualizarBotoesRemover('.calculo-section');
         }
 
-        // Remove uma nota fiscal do cálculo
         function removerCalculoNota(id) {
             const nota = document.getElementById(`calculo-nota-${id}`);
             if (nota) nota.remove();
-            atualizarBotoesRemover('calculo-nota');
+            atualizarBotoesRemover('.calculo-section');
         }
 
-        // Atualiza visibilidade dos botões "Remover" para notas
-        function atualizarBotoesRemover(prefix) {
-            const notas = document.querySelectorAll(`.${prefix}-section`);
-            notas.forEach((nota, index) => {
+        function atualizarBotoesRemover(seletor) {
+            const notas = document.querySelectorAll(seletor);
+            notas.forEach((nota) => {
                 const btn = nota.querySelector(".remove-btn");
-                btn.style.display = notas.length > 1 ? "inline-block" : "none";
+                if (btn) btn.style.display = notas.length > 1 ? "inline-block" : "none";
             });
         }
 
-        // Função para limpar
         function limpar() {
-            // Reinicia contadores
             notaCount = 1;
             calculoNotaCount = 1;
-
-            // Limpa as seções de notas e cálculos
+            
             document.getElementById("notas-container").innerHTML = `
                 <div class="nota-section" id="nota-1">
                     <label for="nf-1">Número da Nota Fiscal:</label>
@@ -318,177 +328,209 @@
                     <button class="remove-btn" onclick="removerCalculoNota(1)" style="display: none;">Remover NF</button>
                 </div>
             `;
-
-            // Limpa a saída
+            
             document.getElementById("referencia-nf").innerHTML = "Referente à nota fiscal: [VALOR_DANFE]";
             document.getElementById("texto_ocorrencia").innerHTML = "[TEXTO_OCORRÊNCIA]";
             document.getElementById("calculo_st").innerHTML = "";
             document.getElementById("infrigencia_texto").innerHTML = "[INFRIGÊNCIA]";
         }
 
-        // Função para voltar à página anterior
         function voltarPaginaAnterior() {
             window.location.href = "capa.html";
         }
+        
+        function copiarTexto(secao) {
+            let textoParaCopiar = "";
+            if (secao === 'ocorrencia') {
+                textoParaCopiar = document.getElementById('referencia-nf').innerText + "\n" +
+                                  document.getElementById('texto_ocorrencia').innerText + "\n" +
+                                  document.getElementById('calculo_st').innerText;
+            } else if (secao === 'infrigencia') {
+                textoParaCopiar = document.getElementById('infrigencia_texto').innerText;
+            }
+            
+            if (textoParaCopiar) {
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textoParaCopiar;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+                alert("Texto copiado para a área de transferência!");
+            }
+        }
 
-        // Atualiza o texto com base nos dados inseridos
         function atualizarTexto() {
             let notasFiscais = [];
             const notas = document.querySelectorAll(".nota-section");
 
-            // Coleta os números das notas fiscais e mercadorias
-            notas.forEach((nota, index) => {
-                const i = index + 1;
-                const nf = document.getElementById(`nf-${i}`).value;
-                const mercadoria = document.getElementById(`mercadoria-${i}`).value;
-                if (nf) notasFiscais.push({ nf, mercadoria });
+            notas.forEach((nota) => {
+                const nfInput = nota.querySelector("input[id^='nf-']");
+                const mercadoriaSelect = nota.querySelector("select[id^='mercadoria-']");
+                if (nfInput && nfInput.value) {
+                    notasFiscais.push({ nf: nfInput.value, mercadoria: mercadoriaSelect.value });
+                }
             });
 
-            // Atualiza a linha de referência das notas fiscais
-            const referenciaNf = document.getElementById("referencia-nf");
-            referenciaNf.innerHTML = notasFiscais.length > 1 
-                ? `Referente às notas fiscais: ${notasFiscais.map(n => n.nf).join(', ')}` 
-                : `Referente à nota fiscal: ${notasFiscais[0]?.nf || "NÃO INFORMADO"}`;
+            if (notasFiscais.length === 0) {
+                alert("Por favor, preencha o número da nota fiscal e selecione o tipo de mercadoria.");
+                return;
+            }
 
-            // Exibe o cálculo do ICMS ST consolidado
+            const referenciaNf = document.getElementById("referencia-nf");
+            referenciaNf.innerHTML = notasFiscais.length > 1
+                ? `Referente às notas fiscais: ${notasFiscais.map(n => n.nf).join(', ')}`
+                : `Referente à nota fiscal: ${notasFiscais[0]?.nf || "NÃO INFORMADO"}`;
+            
             const calculoStDiv = document.getElementById("calculo_st");
             let totalBaseCalculo = 0, totalIcmsSt = 0, totalValorMercadoria = 0, totalIcmsRecolher = 0;
 
             const calculoNotas = document.querySelectorAll(".calculo-section");
-            calculoNotas.forEach((nota, index) => {
-                const i = index + 1;
-                const baseCalculo = converterParaNumero(document.getElementById(`base_calculo-${i}`).value);
-                const icmsSt = converterParaNumero(document.getElementById(`icms_st-${i}`).value);
-                const valorMercadoria = converterParaNumero(document.getElementById(`valor_mercadoria-${i}`).value);
-                const icmsRecolher = converterParaNumero(document.getElementById(`icms_recolher-${i}`).value);
+            calculoNotas.forEach((nota) => {
+                const id = parseInt(nota.id.split('-')[2]);
+                const baseCalculo = converterParaNumero(document.getElementById(`base_calculo-${id}`).value);
+                const icmsSt = converterParaNumero(document.getElementById(`icms_st-${id}`).value);
+                const valorMercadoria = converterParaNumero(document.getElementById(`valor_mercadoria-${id}`).value);
+                const icmsRecolher = converterParaNumero(document.getElementById(`icms_recolher-${id}`).value);
 
                 totalBaseCalculo += baseCalculo;
                 totalIcmsSt += icmsSt;
                 totalValorMercadoria += valorMercadoria;
                 totalIcmsRecolher += icmsRecolher;
             });
-
+            
             const textoCalculo = `
                 <h3>Detalhamento do ICMS Substituição Tributária</h3>
                 <p>Valor Total da Mercadoria: ${formatarReais(totalValorMercadoria)}</p>
-                <p>Valor do ICMS destacado na nf: ${formatarReais(totalIcmsSt)}</p>
+                <p>Valor do ICMS destacado na NF: ${formatarReais(totalIcmsSt)}</p>
                 <p>Base de Cálculo do ICMS ST: ${formatarReais(totalBaseCalculo)}</p>
                 <p>Valor do ICMS a Recolher: ${formatarReais(totalIcmsRecolher)}</p>`;
-
+            
             calculoStDiv.innerHTML = textoCalculo;
 
-            // Gera o texto da ocorrência e da infração com base na mercadoria
             const textoOcorrencia = document.getElementById("texto_ocorrencia");
             const infrigenciaTexto = document.getElementById("infrigencia_texto");
-            const mercadoriaSelecionada = notasFiscais.length > 0 ? notasFiscais[0].mercadoria : "";
-            let textoMercadoria = "[MERCADORIA NÃO ESPECIFICADA]";
-            let textoInfrigencia = "[INFRIGÊNCIA NÃO ESPECIFICADA]";
-
-            if (notasFiscais.every(n => n.mercadoria === mercadoriaSelecionada) && mercadoriaSelecionada) {
-                switch (mercadoriaSelecionada) {
-                    case "produtos_perfumaria":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18 E PROTOCOLO ICMS Nº 26/10, PROTOCOLO ICMS 16/85 E RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - PRODUTOS DE PERFUMARIA E DE HIGIENE PESSOAL E COSMÉTICOS.`;
-                        textoInfrigencia = `
-                            - PROTOCOLO ICMS 26/10 E 16/85;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "material_construcao":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18 E PROTOCOLO ICMS Nº 60/11 E RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - MATERIAIS DE CONSTRUÇÃO E CONGÊNERES.`;
-                        textoInfrigencia = `
-                            - PROTOCOLO ICMS 196/09;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "oleo_lubrificante":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS Nº 110/07 E RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS – COMBUSTÍVEIS E LUBRIFICANTES.`;
-                        textoInfrigencia = `
-                            - CONVÊNIO ICMS 110/07;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "autoparts":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18, PROTOCOLO ICMS Nº 41/2008, CONVÊNIO ICMS 52/17, ANEXO II - AUTOPEÇAS, E RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - AUTOPEÇAS.`;
-                        textoInfrigencia = `
-                            - CONVÊNIO ICMS Nº 41/2008, CONVÊNIO ICMS 52/2017;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "pneumaticos":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/2018 E CONVÊNIO ICMS 102/2017 E CONVÊNIO ICMS 42/2019, RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - PNEUMÁTICOS, CÂMARAS DE AR E PROTETORES DE BORRACHA.`;
-                        textoInfrigencia = `
-                            - CONVÊNIO ICMS Nº 142/2018, CONVÊNIO ICMS 102/2017 E CONVÊNIO ICMS 42/2019;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "produtos_farmaceuticos":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 234/17 E CONVÊNIO ICMS 142/18, RICMS-PA, ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - MEDICAMENTOS DE USO HUMANO E OUTROS PRODUTOS FARMACÊUTICOS PARA USO HUMANO OU VETERINÁRIO.`;
-                        textoInfrigencia = `
-                            - CONVÊNIO ICMS Nº 234/2017;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "cimento":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18 E PROTOCOLO ICMS Nº 11/85 E 50/17, RICMS-PA, ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - CIMENTO.`;
-                        textoInfrigencia = `
-                            - CONVÊNIO ICMS Nº 142/18 E PROTOCOLO ICMS Nº 11/85 E 50/17;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "racao_pet":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18 E PROTOCOLO ICMS Nº 26/04, RICMS-PA, ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - RAÇÃO TIPO “PET” PARA ANIMAIS DOMÉSTICOS.`;
-                        textoInfrigencia = `
-                            - PROTOCOLO ICMS Nº 26/04;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "bebida_alcoolica":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18, PROTOCOLOS ICMS 14/06 E 103/12, RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - BEBIDAS ALCOÓLICAS, EXCETO CERVEJA E CHOPP.`;
-                        textoInfrigencia = `
-                            - CONVÊNIO ICMS 142/18 E PROTOCOLOS ICMS 14/06 E 103/12;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "porta_a_porta":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIOS ICMS Nº 45/99 E 142/18, RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - VENDA DE MERCADORIAS PELO SISTEMA PORTA A PORTA.`;
-                        textoInfrigencia = `
-                            - CONVÊNIOS ICMS 142/18 E 45/99;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "cerveja_chopp":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18 E PROTOCOLO ICMS Nº 11/91, RICMS-PA, ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - CERVEJAS, CHOPES, REFRIGERANTES, ÁGUAS E OUTRAS BEBIDAS.`;
-                        textoInfrigencia = `
-                            - PROTOCOLO ICMS Nº 142/18 E PROTOCOLO ICMS 11/91;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                    case "combustiveis_lubrificantes":
-                        textoMercadoria = `
-                            MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 110/07 E CONVÊNIO ICMS 142/18, RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - COMBUSTÍVEIS E LUBRIFICANTES.`;
-                        textoInfrigencia = `
-                            - CONVÊNIO ICMS Nº 110/07 E CONVÊNIO ICMS 142/18;<br>
-                            - CC RICMS-PA DECRETO Nº 4.676/2001, ART 115, I; ANEXO XIII;<br>
-                            - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
-                        break;
-                }
+            
+            const mercadoriasUnicas = [...new Set(notasFiscais.map(n => n.mercadoria))];
+            
+            if (mercadoriasUnicas.length > 1) {
+                alert("Por favor, selecione apenas um tipo de mercadoria por vez para gerar o texto da ocorrência e infração.");
+                textoOcorrencia.innerHTML = "Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou o DANFE mencionado acima, referente a uma mercadoria destinada a um contribuinte do ICMS. Contudo, não foi identificado o pagamento do ICMS devido por substituição tributária, que deveria ter sido recolhido em favor do Estado do Pará, conforme previsto na legislação vigente. Diante disso, foi lavrado este termo para a cobrança do imposto devido, acrescido das penalidades cabíveis, nos termos da Lei Estadual nº 5.530/1989 e do Regulamento do ICMS, aprovado pelo Decreto nº 4.676/2001.";
+                infrigenciaTexto.innerHTML = "[INFRIGÊNCIA NÃO ESPECIFICADA]";
+                return;
             }
 
-            const textoBaseOcorrencia = `Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou o DANFE mencionado acima, referente a uma mercadoria destinada a um contribuinte do ICMS. Contudo, não foi identificado o pagamento do ICMS devido por substituição tributária, que deveria ter sido recolhido em favor do Estado do Pará, conforme previsto na legislação vigente. ${textoMercadoria} Diante disso, foi lavrado este termo para a cobrança do imposto devido, acrescido das penalidades cabíveis, nos termos da Lei Estadual nº 5.530/1989 e do Regulamento do ICMS, aprovado pelo Decreto nº 4.676/2001.`;
+            const mercadoriaSelecionada = mercadoriasUnicas[0] || "";
+            let textoMercadoria = "";
+            let textoInfrigencia = "";
 
-            textoOcorrencia.innerHTML = textoBaseOcorrencia;
-            infrigenciaTexto.innerHTML = textoInfrigencia;
+            switch (mercadoriaSelecionada) {
+                case "produtos_perfumaria":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18 E PROTOCOLO ICMS Nº 26/10, PROTOCOLO ICMS 16/85 E RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - PRODUTOS DE PERFUMARIA E DE HIGIENE PESSOAL E COSMÉTICOS.`;
+                    textoInfrigencia = `
+                        - PROTOCOLO ICMS 26/10 E 16/85;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "material_construcao":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18 E PROTOCOLO ICMS Nº 60/11 E RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - MATERIAIS DE CONSTRUÇÃO E CONGÊNERES.`;
+                    textoInfrigencia = `
+                        - PROTOCOLO ICMS 196/09;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "oleo_lubrificante":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS Nº 110/07 E RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS – COMBUSTÍVEIS E LUBRIFICANTES.`;
+                    textoInfrigencia = `
+                        - CONVÊNIO ICMS 110/07;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "autoparts":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18, PROTOCOLO ICMS Nº 41/2008, CONVÊNIO ICMS 52/17, ANEXO II - AUTOPEÇAS, E RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - AUTOPEÇAS.`;
+                    textoInfrigencia = `
+                        - CONVÊNIO ICMS Nº 41/2008, CONVÊNIO ICMS 52/2017;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "pneumaticos":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/2018 E CONVÊNIO ICMS 102/2017 E CONVÊNIO ICMS 42/2019, RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - PNEUMÁTICOS, CÂMARAS DE AR E PROTETORES DE BORRACHA.`;
+                    textoInfrigencia = `
+                        - CONVÊNIO ICMS Nº 142/2018, CONVÊNIO ICMS 102/2017 E CONVÊNIO ICMS 42/2019;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "produtos_farmaceuticos":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 234/17 E CONVÊNIO ICMS 142/18, RICMS-PA, ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - MEDICAMENTOS DE USO HUMANO E OUTROS PRODUTOS FARMACÊUTICOS PARA USO HUMANO OU VETERINÁRIO.`;
+                    textoInfrigencia = `
+                        - CONVÊNIO ICMS Nº 234/2017;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "cimento":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18 E PROTOCOLO ICMS Nº 11/85 E 50/17, RICMS-PA, ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - CIMENTO.`;
+                    textoInfrigencia = `
+                        - CONVÊNIO ICMS Nº 142/18 E PROTOCOLO ICMS Nº 11/85 E 50/17;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "racao_pet":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18 E PROTOCOLO ICMS Nº 26/04, RICMS-PA, ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - RAÇÃO TIPO “PET” PARA ANIMAIS DOMÉSTICOS.`;
+                    textoInfrigencia = `
+                        - PROTOCOLO ICMS Nº 26/04;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "bebida_alcoolica":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18, PROTOCOLOS ICMS 14/06 E 103/12, RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - BEBIDAS ALCOÓLICAS, EXCETO CERVEJA E CHOPP.`;
+                    textoInfrigencia = `
+                        - CONVÊNIO ICMS 142/18 E PROTOCOLOS ICMS 14/06 E 103/12;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "porta_a_porta":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIOS ICMS Nº 45/99 E 142/18, RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - VENDA DE MERCADORIAS PELO SISTEMA PORTA A PORTA.`;
+                    textoInfrigencia = `
+                        - CONVÊNIOS ICMS 142/18 E 45/99;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "cerveja_chopp":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 142/18 E PROTOCOLO ICMS Nº 11/91, RICMS-PA, ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - CERVEJAS, CHOPES, REFRIGERANTES, ÁGUAS E OUTRAS BEBIDAS.`;
+                    textoInfrigencia = `
+                        - PROTOCOLO ICMS Nº 142/18 E PROTOCOLO ICMS 11/91;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 643, § 4º e § 5º; ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                case "combustiveis_lubrificantes":
+                    textoMercadoria = `
+                        MERCADORIA SUJEITA AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA CONFORME CONVÊNIO ICMS 110/07 E CONVÊNIO ICMS 142/18, RICMS-PA ANEXO XIII - MERCADORIAS SUJEITAS AO REGIME DE SUBSTITUIÇÃO TRIBUTÁRIA NAS OPERAÇÕES INTERESTADUAIS - COMBUSTÍVEIS E LUBRIFICANTES.`;
+                    textoInfrigencia = `
+                        - CONVÊNIO ICMS Nº 110/07 E CONVÊNIO ICMS 142/18;<br>
+                        - CC RICMS-PA DECRETO Nº 4.676/2001, ART 115, I; ANEXO XIII;<br>
+                        - C/C ART. 78, I, ALÍNEA "J" E "K" DA LEI Nº 5.530, 01/1989.`;
+                    break;
+                default:
+                    textoMercadoria = "[MERCADORIA NÃO ESPECIFICADA]";
+                    textoInfrigencia = "[INFRIGÊNCIA NÃO ESPECIFICADA]";
+                    break;
+            }
+            
+            const textoBaseOcorrencia = `Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou o DANFE mencionado acima, referente a uma mercadoria destinada a um contribuinte do ICMS. Contudo, não foi identificado o pagamento do ICMS devido por substituição tributária, que deveria ter sido recolhido em favor do Estado do Pará, conforme previsto na legislação vigente. ${textoMercadoria} Diante disso, foi lavrado este termo para a cobrança do imposto devido, acrescido das penalidades cabíveis, nos termos da Lei Estadual nº 5.530/1989 e do Regulamento do ICMS, aprovado pelo Decreto nº 4.676/2001.`;
+            
+            textoOcorrencia.innerHTML = textoBaseOcorrencia.trim();
+            infrigenciaTexto.innerHTML = textoInfrigencia.trim();
         }
     </script>
 </body>
