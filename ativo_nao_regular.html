@@ -8,7 +8,7 @@
             font-family: Arial, sans-serif;
             margin: 40px;
             line-height: 1.6;
-            max-width: 800px;
+            max-width: 850px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -184,14 +184,15 @@
     <div class="bloco">
         <h2>OCORRÊNCIA</h2>
         <p id="referencia-nf">Referente à nota fiscal: [VALOR_DANFE]</p>
-        <p id="texto_ocorrencia">Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou os documentos fiscais listados acima, pertencentes ao destinatário, que se encontra na condição de ativo não regular. Diante disso, foi lavrado este AINF para a cobrança antecipada do imposto devido. A situação de ativo não regular decorre de [OCORRÊNCIA], conforme legislação estadual e consulta cadastral anexa.</p>
+        <p id="texto_ocorrencia">Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou os documentos fiscais listados acima, pertencentes ao destinatário, que se encontra na condição de ativo não regular. Diante disso, foi lavrado este AINF para a cobrança do imposto devido. A situação de ativo não regular decorre de [OCORRÊNCIA], conforme legislação estadual e consulta cadastral anexa.</p>
         <div id="calculo_difal"></div>
     </div>
 
     <div class="bloco">
         <h2>INFRIGÊNCIA</h2>
         <p id="infrigencia_texto"></p>
-        <p id="receita_texto">[RECEITA]</p>
+        <p id="receita_texto">[RECEITA]</p><br>
+        <p>Incluir se for TAD: - LEI 6.182/98; ART. 2º; ART. 60 (CAPUT), §1º, §2º E ART. 61; <br></p>
     </div>
 
     <div class="footer">
@@ -395,7 +396,7 @@
             document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
 
             document.getElementById("referencia-nf").innerHTML = "Referente à nota fiscal: [VALOR_DANFE]";
-            document.getElementById("texto_ocorrencia").innerHTML = "Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou os documentos fiscais listados acima, pertencentes ao destinatário, que se encontra na condição de ativo não regular. Diante disso, foi lavrado este AINF para a cobrança antecipada do imposto devido. A situação de ativo não regular decorre de [OCORRÊNCIA], conforme legislação estadual e consulta cadastral anexa.";
+            document.getElementById("texto_ocorrencia").innerHTML = "Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou os documentos fiscais listados acima, pertencentes ao destinatário, que se encontra na condição de ativo não regular. Diante disso, foi lavrado este AINF para a cobrança do imposto devido. A situação de ativo não regular decorre de [OCORRÊNCIA], conforme legislação estadual e consulta cadastral anexa.";
             document.getElementById("calculo_difal").innerHTML = "";
             document.getElementById("infrigencia_texto").innerHTML = "";
             document.getElementById("receita_texto").innerHTML = "[RECEITA]";
@@ -451,7 +452,7 @@
             ];
 
             const textoOcorrencia = document.getElementById("texto_ocorrencia");
-            const textoBase = "Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou os documentos fiscais listados acima, pertencentes ao destinatário, que se encontra na condição de ativo não regular. Diante disso, foi lavrado este AINF para a cobrança antecipada do imposto devido. A situação de ativo não regular decorre de ";
+            const textoBase = "Durante operação de fiscalização realizada no Posto Fiscal de Itinga, o condutor apresentou os documentos fiscais listados acima, pertencentes ao destinatário, que se encontra na condição de ativo não regular. Diante disso, foi lavrado este AINF para a cobrança do imposto devido. A situação de ativo não regular decorre de ";
             const ocorrenciaTexto = motivos.map(i => ocorrencias[i]).join(" e ");
             textoOcorrencia.innerHTML = `${textoBase}${ocorrenciaTexto}, conforme legislação estadual e consulta cadastral anexa.`;
 
@@ -514,9 +515,10 @@
                 document.getElementById("calculo-container").style.display = "none";
             }
             
-            const infrigenciaTexto = document.getElementById("infrigencia_texto");
+            /*const infrigenciaTexto = document.getElementById("infrigencia_texto");
             const motivoTexto = motivos.length > 0 ? motivoLetras.join(' e ') : "Nenhuma selecionada";
-            infrigenciaTexto.innerHTML = `${motivoTexto}`;
+            infrigenciaTexto.innerHTML = `${motivoTexto}`;*/
+            document.getElementById("infrigencia_texto").innerHTML = "";
 
             const receitaTexto = document.getElementById("receita_texto");
             let textoInfracao = "";
@@ -526,20 +528,18 @@
                 
                 if (icmsSelecionados.some(i => [1, 2, 3].includes(i)) && !icmsSelecionados.includes(4)) {
                     textoInfracao += `
-                        - C.C. LEI 5.530/89: ART. 1º, I; ART. 2º, §3º;<br>
+                        - C.C. LEI 5.530/89: ART. 1º, I; ART. 2º, §3º e ART. 62;<br>
                         - DECRETO 4.676/01 (RICMS/PA): ART. 108, §9º; ART. 115, I; ANEXO I, ART. 107; APÊNDICE I;<br>
-                        - LEI 6.182/98; ART. 2º; ART. 60 (CAPUT), §1º, §2º E ART. 61;<br>
                         - CC IN SEFA 13/2005, ART. 1º, II, ${motivoStr} E ART. 2º, ${receitaStr}.<br>
-                        - c.c LC 123/06 Art. 13 XIII, g, 1. (Se simples nacional).
+                        
                     `;
                 }
                 if (icmsSelecionados.includes(4)) {
                     textoInfracao += `
                         - C.C. LEI 5.530/89: ART. 1º, I; ART. 2º, §3º;<br>
-                        - DECRETO 4.676/01 (RICMS/PA): ART. 108, VII, “E” E §9º; ART. 115, I; ANEXO I, ART. 114-F;<br>
-                        - LEI 6.182/98; ART. 2º; ART. 60 (CAPUT), §1º, §2º E ART. 61;<br>
+                        - DECRETO 4.676/01 (RICMS/PA): ART. 108, VII, “E” E §9º; ART. 115, I; ANEXO I, ART. 114-E E ART. 114-F;<br>
                         - CC IN SEFA 13/2005, ART. 1º, II, ${motivoStr}; E ART. 2º, VII.<br>
-                        - c.c LC 123/06 Art. 13 XIII, g, 1. (Se simples nacional).
+                        
                     `;
                 }
                 if (icmsSelecionados.includes(0)) {
@@ -549,12 +549,13 @@
                         - LEI ESTADUAL Nº 8.315/15, ART. 1º; ART. 2º, CAPUT E PARÁGRAFO ÚNICO, INCISO I; ART. 6º; ART. 7º, INCISOS I, II, III E IV; ART. 10 E ART. 11;<br>
                         - RICMS, APROVADO PELO DECRETO 4.676/01, ART. 108, §§ 3º E 9º;<br>
                         - CC IN SEFA 13/2005, ART. 1º, II, ${motivoStr} E ART. 2º, INCISO I.<br>
-                        - c.c LC 123/06 Art. 13 XIII, g, 1. (Se simples nacional).
+                        
                     `;
                 }
             }
-            receitaTexto.innerHTML = icmsSelecionados.length > 0 ? `${receitaNumeros.join(' e ')}<br>${textoInfracao}` : "Nenhum selecionado";
-        }
+            /*receitaTexto.innerHTML = icmsSelecionados.length > 0 ? `${receitaNumeros.join(' e ')}<br>${textoInfracao}` : "Nenhum selecionado";*/ 
+        receitaTexto.innerHTML = icmsSelecionados.length > 0 ? textoInfracao: "";
+           }
     </script>
 </body>
 </html>
