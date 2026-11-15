@@ -1,25 +1,5 @@
-function solicitarNF() {
-    let notaFiscal = prompt("Digite o número da NF:");
-    if (notaFiscal !== null && notaFiscal !== "") {
-        let elementoTexto = document.getElementById("nf");
-        elementoTexto.innerHTML = elementoTexto.innerHTML.replace("[NF]", notaFiscal);
-    } else {
-        alert("Você não inseriu um número!");
-    }
-
-}
-
-window.onload = solicitarNF;
-
-function solicitarVM() {
-    let valorMercadoria = prompt("Digite o valor da mercadoria:");
-    if (valorMercadoria !== null && valorMercadoria !== "") {
-        let elementoMercadoria = document.getElementById("VM");
-        elementoMercadoria.innerHTML = elementoMercadia.innerHTML.replace("[30.125,25]", valorMercadoria);
-    } else {
-        alert("Você não inseriu um valor!");
-    }
-
-}
-
-window.onload = solicitarVM;
+const input=document.querySelector('#scenarioSearch'),cards=[...document.querySelectorAll('.scenario-card')],count=document.querySelector('#resultCount'),empty=document.querySelector('#emptyState'),theme=document.querySelector('#themeButton');
+const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function filter(){const q=norm(input.value.trim());let n=0;cards.forEach(c=>{const show=norm(c.dataset.search+' '+c.textContent).includes(q);c.hidden=!show;if(show)n++});count.textContent=`${n} ${n===1?'opção':'opções'}`;empty.hidden=n!==0}
+function setTheme(t){document.body.classList.toggle('dark',t==='dark');localStorage.setItem('ainf-theme',t);theme.ariaLabel=`Ativar tema ${t==='dark'?'claro':'escuro'}`}
+input.addEventListener('input',filter);document.querySelector('#clearSearch').onclick=()=>{input.value='';filter();input.focus()};theme.onclick=()=>setTheme(document.body.classList.contains('dark')?'light':'dark');document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();input.focus()}if(e.key==='Escape'&&document.activeElement===input){input.value='';filter();input.blur()}});setTheme(localStorage.getItem('ainf-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));

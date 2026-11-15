@@ -1,15 +1,1 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    line-height: 1.6;
-}
-.texto {
-    margin-bottom: 20px;
-}
-.valores {
-    margin-left: 20px;
-}
-.valor {
-    color: #0066cc;
-    font-weight: bold;
-}
+:root{--bg:#f5f7f5;--surface:#fff;--text:#16231f;--muted:#71807a;--line:#dde5e0;--green:#12694d}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:"DM Sans",sans-serif;display:flex;flex-direction:column}header{height:72px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 max(24px,calc((100vw - 800px)/2))}.brand{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none}.brand-mark{width:34px;height:34px;border-radius:10px;background:var(--green);color:white;display:grid;place-items:center;font-weight:700}.brand strong{font-size:15px;letter-spacing:.06em}main{width:min(800px,calc(100% - 40px));margin:auto;padding:64px 0 80px}.intro{margin-bottom:30px}.intro h1{margin:0 0 8px;font-size:clamp(30px,5vw,42px);letter-spacing:-.04em}.intro p{margin:0;color:var(--muted)}.options{display:grid;grid-template-columns:1fr 1fr;gap:12px}.options a{min-height:92px;display:grid;grid-template-columns:44px 1fr 24px;align-items:center;gap:14px;padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:14px;color:inherit;text-decoration:none;transition:border-color .2s,transform .2s,box-shadow .2s}.options a:hover,.options a:focus-visible{border-color:var(--green);transform:translateY(-2px);box-shadow:0 12px 30px rgba(22,52,41,.08);outline:none}.icon{width:44px;height:44px;border-radius:11px;background:#e5f2ec;color:var(--green);display:grid;place-items:center;font-size:12px;font-weight:700}.icon.amber{background:#f8eddb;color:#955d18}.icon.violet{background:#eeeafb;color:#66509b}.icon.blue{background:#e5eef8;color:#35638b}.options strong{font-size:15px}.arrow{color:var(--green);font-size:20px;transition:transform .2s}.options a:hover .arrow{transform:translateX(3px)}footer{padding:22px;text-align:center;border-top:1px solid var(--line);color:var(--muted);font-size:11px}@media(max-width:620px){header{height:64px}main{padding:48px 0 60px}.options{grid-template-columns:1fr}.intro h1{font-size:32px}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}

@@ -1,51 +1,53 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!doctype html>
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Escolha o Tipo de Auto de Infração</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f0f0f0;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-        }
-        .container {
-            max-width: 600px;
-            width: 100%;
-        }
-        .botao {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            background-color: #0066cc;
-            color: white;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        .botao:hover {
-            background-color: #004d99;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Assistente para enquadramento de Autos de Infração.">
+  <title>AINF · Enquadramento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>ENQUADRAMENTO AUTO DE INFRAÇÃO</h1>
-    <div class="container">
-        <a href="ativo_nao_regular.html" class="botao">ATIVO NÃO REGULAR</a>
-        <a href="suspenso.html" class="botao">SUSPENSO</a>
-        <a href="st.html" class="botao">SUBSTITUIÇÃO TRIBUTÁRIA</a>
-        <a href="difal_nao_contribuinte.html" class="botao">DIFAL NÃO CONTRIBUINTE</a>
-        <!--<a href="#" class="botao">SEM NOTA FISCAL</a> -->
+  <header>
+    <a class="brand" href="index.html" aria-label="Página inicial">
+      <span class="brand-mark">A</span>
+      <strong>AINF</strong>
+    </a>
+  </header>
+
+  <main>
+    <div class="intro">
+      <h1>Escolha o enquadramento</h1>
+      <p>Selecione uma opção para começar.</p>
     </div>
+
+    <nav class="options" aria-label="Tipos de enquadramento">
+      <a href="ativo_nao_regular.html">
+        <span class="icon">AR</span>
+        <strong>Ativo não regular</strong>
+        <span class="arrow">→</span>
+      </a>
+      <a href="suspenso.html">
+        <span class="icon amber">SP</span>
+        <strong>Suspenso</strong>
+        <span class="arrow">→</span>
+      </a>
+      <a href="st.html">
+        <span class="icon violet">ST</span>
+        <strong>Substituição tributária</strong>
+        <span class="arrow">→</span>
+      </a>
+      <a href="difal_nao_contribuinte.html">
+        <span class="icon blue">DF</span>
+        <strong>DIFAL não contribuinte</strong>
+        <span class="arrow">→</span>
+      </a>
+    </nav>
+  </main>
+
+  <footer>Ferramenta de apoio à fiscalização</footer>
 </body>
 </html>
