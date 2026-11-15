@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Antecipação — Bebidas Alcoólicas</title>
+  <link rel="stylesheet" href="form-style.css">
+  <style>
+    .dados-operacao{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+    .dados-operacao label{margin-top:0!important}
+    #texto_ocorrencia,#infrigencia_texto{text-align:justify!important;text-justify:inter-word}
+    @media(max-width:600px){.dados-operacao{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="header"><button type="button" onclick="voltarPaginaAnterior()">Voltar</button></div>
+
+  <div class="form-container">
+    <h2>Dados da operação</h2>
+    <div class="nota-section dados-operacao">
+      <div>
+        <label for="numero_nf">Número da NF-e</label>
+        <input type="text" id="numero_nf" placeholder="Ex.: 123456" autocomplete="off">
+      </div>
+      <div>
+        <label for="ncm">NCM da mercadoria</label>
+        <input type="text" id="ncm" placeholder="Ex.: 2208.30.20" autocomplete="off">
+      </div>
+    </div>
+    <button type="button" onclick="gerarTexto()">Gerar texto</button>
+  </div>
+
+  <div class="bloco">
+    <h2>Ocorrência</h2>
+    <p id="texto_ocorrencia">Durante fiscalização de mercadorias em trânsito no Posto Fiscal de Itinga, o condutor apresentou o DANFE da NF-e nº [XXX], referente à aquisição interestadual de bebidas alcoólicas classificadas na NCM [XXX], destinadas a estabelecimento localizado no Pará. Em consulta ao SIAT/SEFA-PA, não foi localizado recolhimento do ICMS por antecipação vinculado à referida operação. O recolhimento era devido no ato da entrada das mercadorias em território paraense. Diante da falta de recolhimento no prazo regulamentar, foi lavrado o presente Auto de Infração e Notificação Fiscal eletrônico para formalizar a exigência do ICMS devido.</p>
+  </div>
+
+  <div class="bloco">
+    <h2>Infrigência</h2>
+    <p id="infrigencia_texto">Lei Estadual nº 5.530/1989, art. 2º, § 3º, combinado com os arts. 713-S, 713-U e 108, inciso VII, alínea “b”, do RICMS/PA, aprovado pelo Decreto Estadual nº 4.676/2001, pela falta de recolhimento antecipado do ICMS no ato da entrada em território paraense.</p>
+  </div>
+
+  <div class="footer"><button type="button" onclick="limpar()">Limpar</button></div>
+
+  <script>
+    const MODELO_OCORRENCIA = 'Durante fiscalização de mercadorias em trânsito no Posto Fiscal de Itinga, o condutor apresentou o DANFE da NF-e nº [NF], referente à aquisição interestadual de bebidas alcoólicas classificadas na NCM [NCM], destinadas a estabelecimento localizado no Pará. Em consulta ao SIAT/SEFA-PA, não foi localizado recolhimento do ICMS por antecipação vinculado à referida operação. O recolhimento era devido no ato da entrada das mercadorias em território paraense. Diante da falta de recolhimento no prazo regulamentar, foi lavrado o presente Auto de Infração e Notificação Fiscal eletrônico para formalizar a exigência do ICMS devido.';
+
+    function gerarTexto() {
+      const nf = document.getElementById('numero_nf').value.trim() || 'NÃO INFORMADO';
+      const ncm = document.getElementById('ncm').value.trim() || 'NÃO INFORMADO';
+      document.getElementById('texto_ocorrencia').textContent = MODELO_OCORRENCIA
+        .replace('[NF]', nf)
+        .replace('[NCM]', ncm);
+    }
+
+    function limpar() {
+      document.getElementById('numero_nf').value = '';
+      document.getElementById('ncm').value = '';
+      document.getElementById('texto_ocorrencia').textContent = MODELO_OCORRENCIA
+        .replace('[NF]', '[XXX]')
+        .replace('[NCM]', '[XXX]');
+      document.getElementById('numero_nf').focus();
+    }
+
+    function voltarPaginaAnterior() { window.location.href = 'index.html'; }
+  </script>
+  <script src="form-ui.js"></script>
+</body>
+</html>
